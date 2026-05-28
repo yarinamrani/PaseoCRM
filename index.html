@@ -283,6 +283,7 @@
     .stat{padding:10px 12px}
     .stat .n{font-size:20px}
     .stat .l{font-size:10px}
+    .stat:nth-child(5){grid-column:1/-1} /* המרה — רוחב מלא, בלי חור */
 
     /* Source tabs — גלילה אופקית חלקה עם snap */
     .src-tabs{padding:10px 14px 0;gap:2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
@@ -295,7 +296,7 @@
     .views{flex:0 0 auto}
 
     /* Content */
-    .content{padding:12px 14px 90px} /* תחתית גדולה כדי שה-FAB לא יסתיר */
+    .content{padding:12px 14px 110px} /* תחתית גדולה כדי שה-FAB לא יסתיר */
 
     /* Kanban — עמודות צרות יותר */
     .col{width:78vw;max-width:300px}
