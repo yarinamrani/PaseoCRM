@@ -988,15 +988,15 @@ function drawDetail(){
     const newSt=b.dataset.st;
     if(newSt===l.status)return;
     sb.from('crm_activities').insert({lead_id:l.id,kind:'status_change',body:`סטטוס שונה: ${STATUS_MAP[l.status]?.l||l.status} ← ${STATUS_MAP[newSt].l}`,actor:'מערכת'});
-    updateLead(l.id,{status:newSt,updated_at:new Date().toISOString()}).then(()=>{loadActs(l.id)});
+    updateLead(l.id,{status:newSt,updated_at:new Date().toISOString()}).then(()=>{loadActs(l.id);drawDetail()});
   });
   // Relevance
   $$('#x-rel button',el).forEach(b=>b.onclick=()=>{
-    updateLead(l.id,{relevance:b.dataset.rel});
+    updateLead(l.id,{relevance:b.dataset.rel}).then(()=>drawDetail());
   });
   // Assigned
   $$('#x-assigned button',el).forEach(b=>b.onclick=()=>{
-    updateLead(l.id,{assigned_to:b.dataset.as||null});
+    updateLead(l.id,{assigned_to:b.dataset.as||null}).then(()=>drawDetail());
   });
 
   // Field auto-save on blur + track pending edits while typing
