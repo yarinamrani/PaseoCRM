@@ -269,13 +269,60 @@
   .toast.show{opacity:1}
 
   @media (max-width:900px){
-    .stats{grid-template-columns:repeat(2,1fr)}
-    .col{width:260px}
+    /* Header — קומפקטי, בלי כפתור ליד (עובר ל-FAB) */
+    header{padding:10px 14px}
+    .brand .logo-sm{height:34px}
+    .brand .sub{display:none}
+    .header-r{gap:10px}
+    .add-lead-btn{display:none} /* מוסתר — מוחלף ב-FAB צף */
+    .live{font-size:10px}
+    .pill,.search{font-size:13px}
+
+    /* Stats — 2 טורים צפופים בלי חורים */
+    .stats{grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 14px 0}
+    .stat{padding:10px 12px}
+    .stat .n{font-size:20px}
+    .stat .l{font-size:10px}
+
+    /* Source tabs — גלילה אופקית חלקה עם snap */
+    .src-tabs{padding:10px 14px 0;gap:2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+    .src-tab{padding:9px 14px 11px;scroll-snap-align:start;font-size:13px}
+
+    /* Toolbar — נגלל אופקית במקום להישבר */
+    .toolbar{padding:12px 14px;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .toolbar .search{min-width:160px;flex:0 0 auto;width:200px}
+    .toolbar .pill{flex:0 0 auto}
+    .views{flex:0 0 auto}
+
+    /* Content */
+    .content{padding:12px 14px 90px} /* תחתית גדולה כדי שה-FAB לא יסתיר */
+
+    /* Kanban — עמודות צרות יותר */
+    .col{width:78vw;max-width:300px}
+
+    /* Detail panel — מסך מלא */
     .detail{width:100%}
-    .fields{grid-template-columns:1fr}
-    header{padding:12px 16px}
-    .stats,.toolbar,.content{padding-left:14px;padding-right:14px}
+    .fields{grid-template-columns:1fr 1fr}
+    .detail-head h2{font-size:20px}
+
+    /* Add modal — מסך מלא במובייל */
+    .add-modal{top:0;left:0;transform:none;width:100vw;height:100vh;max-height:100vh;border-radius:0;border:none;animation:modalSlideUp .22s cubic-bezier(.4,0,.2,1) forwards}
+    @keyframes modalSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .add-modal .add-body{padding:16px 16px 24px}
+    .add-modal .fields{grid-template-columns:1fr 1fr}
+    .add-modal .field.full{grid-column:1/-1}
+
+    /* FAB — כפתור ליד חדש צף */
+    .fab{display:flex !important}
   }
+
+  /* FAB — מוסתר בדסקטופ, מוצג במובייל */
+  .fab{display:none;position:fixed;bottom:20px;left:20px;z-index:70;
+    width:56px;height:56px;border-radius:50%;background:var(--gold);color:#1a1206;
+    border:none;cursor:pointer;align-items:center;justify-content:center;
+    font-size:28px;font-weight:300;line-height:1;
+    box-shadow:0 6px 20px rgba(201,162,39,.45);transition:transform .15s}
+  .fab:active{transform:scale(.92)}
 </style>
 </head>
 <body>
@@ -361,7 +408,7 @@ const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
 
 // ===== State =====
 let LEADS=[], ACTS={}; // ACTS[lead_id] = [activities]
-let view='kanban', search='', filters={status:'',source:'',relevance:'',assigned:'',timeframe:''};
+let view=(window.matchMedia&&window.matchMedia('(max-width:900px)').matches)?'table':'kanban', search='', filters={status:'',source:'',relevance:'',assigned:'',timeframe:''};
 let sortBy='received_at', sortDir='desc';
 let calRef=new Date();
 let openLeadId=null;
@@ -540,15 +587,17 @@ function renderShell(){
       <option value="past">עבר</option>
     </select>
     <div class="views">
-      <button data-v="kanban" class="active">לוח</button>
-      <button data-v="table">טבלה</button>
-      <button data-v="calendar">יומן</button>
+      <button data-v="kanban" class="${view==='kanban'?'active':''}">לוח</button>
+      <button data-v="table" class="${view==='table'?'active':''}">טבלה</button>
+      <button data-v="calendar" class="${view==='calendar'?'active':''}">יומן</button>
     </div>
   </div>
-  <div class="main"><div class="content" id="main"></div></div>`;
+  <div class="main"><div class="content" id="main"></div></div>
+  <button class="fab" id="fab-add" aria-label="ליד חדש">+</button>`;
 
   $('#logout').onclick=async()=>{await sb.auth.signOut();renderLogin()};
   $('#add-lead-btn').onclick=()=>{showAddModal=true;drawAddModal()};
+  $('#fab-add').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#q').oninput=e=>{search=e.target.value.trim().toLowerCase();draw()};
   $('#f-status').onchange=e=>{filters.status=e.target.value;draw()};
   $('#f-rel').onchange=e=>{filters.relevance=e.target.value;draw()};
