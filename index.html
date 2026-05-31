@@ -748,8 +748,14 @@ function inTimeframe(l){
 function filtered(){
   let arr=LEADS.filter(l=>{
     if(sourceTab!=='all'&&l.source!==sourceTab)return false;
+    // לא-רלוונטי מוסתר כברירת מחדל — מופיע רק אם בוחרים אותו ספציפית בפילטר
+    if(filters.relevance==='irrelevant'){
+      if(l.relevance!=='irrelevant')return false;
+    } else {
+      if(l.relevance==='irrelevant')return false; // הסתר רעש
+      if(filters.relevance&&l.relevance!==filters.relevance)return false;
+    }
     if(filters.status&&l.status!==filters.status)return false;
-    if(filters.relevance&&l.relevance!==filters.relevance)return false;
     if(filters.source&&l.source!==filters.source)return false;
     if(filters.assigned){
       if(filters.assigned==='__none'&&l.assigned_to)return false;
@@ -774,13 +780,17 @@ function filtered(){
 
 // ===== Stats =====
 function drawStats(){
-  const visible=filtered();
-  const active=visible.filter(l=>!['won','lost'].includes(l.status)&&l.relevance!=='irrelevant').length;
-  const week=visible.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=7}).length;
-  const month=visible.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=30}).length;
-  const won=visible.filter(l=>l.status==='won').length;
-  const totalQual=visible.filter(l=>l.relevance!=='irrelevant').length;
-  const conv=totalQual?Math.round(won/totalQual*100):0;
+  // הסטטיסטיקות מבוססות על הטאב הנוכחי, תמיד מתעלמות מלא-רלוונטיים, ללא תלות בפילטרי הצד
+  const base=LEADS.filter(l=>{
+    if(sourceTab!=='all'&&l.source!==sourceTab)return false;
+    if(l.relevance==='irrelevant')return false;
+    return true;
+  });
+  const active=base.filter(l=>!['won','lost'].includes(l.status)).length;
+  const week=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=7}).length;
+  const month=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=30}).length;
+  const won=base.filter(l=>l.status==='won').length;
+  const conv=base.length?Math.round(won/base.length*100):0;
   $('#stats').innerHTML=`
     <div class="stat"><div class="n">${active}</div><div class="l">לידים פעילים</div></div>
     <div class="stat"><div class="n">${week}</div><div class="l">השבוע</div></div>
@@ -921,6 +931,16 @@ function drawTable(){
 function drawMobileCards(){
   const data=filtered();
   if(!data.length){$('#main').innerHTML=`<div class="empty"><div class="big">אין לידים</div>נסה לשנות פילטרים או חיפוש</div>`;return}
+
+  // במצב "לא רלוונטי" — רשימה פשוטה בלי קיבוץ לפי דחיפות (זה ארכיון)
+  if(filters.relevance==='irrelevant'){
+    $('#main').innerHTML=`<div class="mob-cards"><div class="mob-section">
+      <div class="mob-section-head"><span class="mob-section-icon">🗑</span><span class="mob-section-title">לא רלוונטי</span><span class="mob-section-cnt">${data.length}</span></div>
+      ${data.map(mobCardHTML).join('')}
+    </div></div>`;
+    $$('.mob-card').forEach(c=>{c.onclick=e=>{if(e.target.closest('a')||e.target.closest('.mob-card-action'))return;openDetail(c.dataset.id)}});
+    return;
+  }
 
   // קיבוץ לפי דחיפות
   const groups={today:[],week:[],month:[],future:[],past:[],nodate:[]};
