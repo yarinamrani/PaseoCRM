@@ -254,6 +254,32 @@
   .activity .actor{font-size:10px;color:var(--gold);margin-top:5px}
   .timeline-empty{text-align:center;color:var(--muted-2);padding:24px;font-size:12px;font-style:italic}
 
+  /* ===== Dashboard ===== */
+  .dash{padding:0}
+  .dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .dash-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px}
+  .dash-card-wide{grid-column:1/-1}
+  .dash-title{font-family:'Frank Ruhl Libre',serif;font-size:16px;font-weight:700;color:var(--gold);margin-bottom:16px}
+  .dash-empty{color:var(--muted-2);text-align:center;padding:30px;font-size:13px;font-style:italic}
+  .dash-donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .dash-donut{width:140px;height:140px;flex-shrink:0}
+  .dash-donut-total{font-size:26px;font-weight:800;fill:var(--txt);font-family:'Frank Ruhl Libre',serif}
+  .dash-donut-label{font-size:10px;fill:var(--muted)}
+  .dash-legend{display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px}
+  .dash-legend-item{font-size:13px;color:var(--txt-2);display:flex;align-items:center;gap:8px}
+  .dash-legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+  .dash-legend-item b{color:var(--txt);margin-right:auto}
+  .dash-legend-pct{color:var(--muted);font-size:11px}
+  .dash-bars{display:flex;flex-direction:column;gap:11px}
+  .dash-bar-row{display:flex;align-items:center;gap:10px}
+  .dash-bar-label{font-size:12px;color:var(--txt-2);width:90px;text-align:left;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dash-bar-track{flex:1;height:18px;background:var(--panel-3);border-radius:5px;overflow:hidden}
+  .dash-bar-fill{height:100%;border-radius:5px;transition:width .5s cubic-bezier(.4,0,.2,1);min-width:2px}
+  .dash-bar-val{font-size:13px;font-weight:700;color:var(--txt);width:30px;text-align:center;flex-shrink:0}
+  .dash-line{width:100%;height:auto}
+  .dash-line-val{font-size:10px;fill:var(--txt-2);font-weight:600}
+  .dash-line-x{font-size:9px;fill:var(--muted)}
+
   /* ===== Calendar (kept) ===== */
   .calwrap{padding:0}
   .calnav{display:flex;align-items:center;gap:14px;margin-bottom:14px}
@@ -302,6 +328,10 @@
     .add-lead-btn{display:none} /* מוסתר — מוחלף ב-FAB צף */
     .live{font-size:10px}
     .pill,.search{font-size:13px}
+    #export-btn{padding:8px 10px;font-size:12px}
+    .dash-grid{grid-template-columns:1fr;gap:12px}
+    .dash-card{padding:14px}
+    .dash-bar-label{width:70px;font-size:11px}
 
     /* Stats — שורה קומפקטית 4 מספרים אופקיים */
     .stats{grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px 0}
@@ -510,7 +540,8 @@ function fmtRel(ts){
   return d.toLocaleDateString('he-IL');
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
-function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}`}
+const WA_OPENING_MSG='היי, מדברים מהפסאו 🌅 ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(WA_OPENING_MSG)}`}
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
 // ===== Data =====
@@ -625,6 +656,7 @@ function renderShell(){
     <div class="brand">${LOGO_SVG_SMALL}<span class="sub">ניהול לידים</span></div>
     <div class="header-r">
       <button class="add-lead-btn" id="add-lead-btn">+ ליד חדש</button>
+      <button class="pill" id="export-btn" title="ייצוא לאקסל">⬇ Excel</button>
       <div class="live"><span class="pulse"></span>עדכון חי</div>
       <button class="pill" id="logout">יציאה</button>
     </div>
@@ -641,12 +673,14 @@ function renderShell(){
       <button data-v="kanban" class="${view==='kanban'?'active':''}">לוח</button>
       <button data-v="table" class="${view==='table'?'active':''}">טבלה</button>
       <button data-v="calendar" class="${view==='calendar'?'active':''}">יומן</button>
+      <button data-v="dashboard" class="${view==='dashboard'?'active':''}">דוחות</button>
     </div>
   </div>
   <div class="main"><div class="content" id="main"></div></div>
   <button class="fab" id="fab-add" aria-label="ליד חדש">+</button>`;
 
   $('#logout').onclick=async()=>{await sb.auth.signOut();renderLogin()};
+  $('#export-btn').onclick=exportExcel;
   $('#add-lead-btn').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#fab-add').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#q').oninput=e=>{search=e.target.value.trim().toLowerCase();draw()};
@@ -732,6 +766,37 @@ function setupDropdown(elId, filterKey, options){
 }
 function closeAllDropdowns(){
   document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+}
+
+// ===== Export to Excel (CSV + BOM for Hebrew) =====
+function exportExcel(){
+  const data=filtered();
+  if(!data.length){showToast('אין לידים לייצוא');return}
+  const headers=['שם','טלפון','אימייל','מקור','סטטוס','רלוונטיות','סוג אירוע','תאריך אירוע','שעה','אורחים','אחראי','מארחת','הערות','התקבל'];
+  const srcL={callevent:'Call Event',paseo_form:'טופס אתר',phone:'טלפוני'};
+  const rows=data.map(l=>[
+    l.full_name||'', l.phone||'', l.email||'',
+    srcL[l.source]||l.source||'',
+    (STATUS_MAP[l.status]||{}).l||l.status||'',
+    (RELEVANCE.find(r=>r.k===l.relevance)||{}).l||'',
+    l.event_type||'',
+    l.event_date?fmtDate(l.event_date):(l.event_date_raw||''),
+    l.event_time||'', l.guests_raw||'',
+    l.assigned_to||'', l.hostess||'',
+    (l.notes||'').replace(/\n/g,' '),
+    l.received_at?new Date(l.received_at).toLocaleDateString('he-IL'):''
+  ]);
+  const escCsv=v=>{const s=String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const csv=[headers,...rows].map(r=>r.map(escCsv).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const tabName=sourceTab==='all'?'הכל':(srcL[sourceTab]||sourceTab);
+  a.href=url;
+  a.download=`לידים_פסאו_${tabName}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`יוצאו ${data.length} לידים`);
 }
 // סגירת dropdowns בלחיצה בחוץ — נרשם פעם אחת בלבד
 if(!window.__ddCloseBound){
@@ -838,6 +903,7 @@ function draw(){
     if(isMobile())drawMobileCards();
     else drawTable();
   }
+  else if(view==='dashboard')drawDashboard();
   else drawCalendar();
 }
 
@@ -1055,6 +1121,120 @@ function mobCardHTML(l){
       </div>
     </div>
   </div>`;
+}
+
+// ===== Dashboard =====
+function drawDashboard(){
+  // הדשבורד מתעלם מפילטרי סטטוס/תאריך — מציג תמונה כוללת של הטאב הנוכחי (ללא לא-רלוונטיים)
+  const base=LEADS.filter(l=>{
+    if(sourceTab!=='all'&&l.source!==sourceTab)return false;
+    if(l.relevance==='irrelevant')return false;
+    return true;
+  });
+  if(!base.length){$('#main').innerHTML=`<div class="empty"><div class="big">אין נתונים להצגה</div><div class="empty-sub">עדיין אין לידים בקטגוריה הזו</div></div>`;return}
+
+  // 1. לפי מקור
+  const bySource={};
+  base.forEach(l=>{const k=SRC_LABEL[l.source]||l.source;bySource[k]=(bySource[k]||0)+1});
+
+  // 2. לפי סטטוס
+  const byStatus=STATUSES.map(s=>({label:s.l,color:s.c,count:base.filter(l=>l.status===s.k).length})).filter(x=>x.count>0);
+
+  // 3. לאורך זמן (לפי חודש קבלה, 6 חודשים אחרונים)
+  const byMonth={};
+  base.forEach(l=>{
+    if(!l.received_at)return;
+    const d=new Date(l.received_at);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    byMonth[key]=(byMonth[key]||0)+1;
+  });
+  const monthKeys=Object.keys(byMonth).sort().slice(-6);
+  const monthData=monthKeys.map(k=>{
+    const [y,mo]=k.split('-');
+    return {label:`${MONTHS[+mo-1].slice(0,3)} ${y.slice(2)}`,count:byMonth[k]};
+  });
+
+  // 4. לפי סוג אירוע (top 6)
+  const byType={};
+  base.forEach(l=>{const t=(l.event_type||'').trim();if(t)byType[t]=(byType[t]||0)+1});
+  const typeData=Object.entries(byType).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([label,count])=>({label,count}));
+
+  const srcColors=['#4a90d9','#2ecc71','#f1c40f','#9b59b6','#e67e22'];
+
+  $('#main').innerHTML=`<div class="dash">
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-title">לידים לפי מקור</div>
+        ${donutChart(Object.entries(bySource).map(([l,v],i)=>({label:l,count:v,color:srcColors[i%srcColors.length]})))}
+      </div>
+      <div class="dash-card">
+        <div class="dash-title">לידים לפי סטטוס</div>
+        ${barChart(byStatus,true)}
+      </div>
+      <div class="dash-card dash-card-wide">
+        <div class="dash-title">לידים לאורך זמן</div>
+        ${lineChart(monthData)}
+      </div>
+      <div class="dash-card dash-card-wide">
+        <div class="dash-title">סוגי אירועים מובילים</div>
+        ${typeData.length?barChart(typeData.map(t=>({label:t.label,count:t.count,color:'var(--gold)'})),false):'<div class="dash-empty">אין נתוני סוג אירוע</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+function donutChart(data){
+  const total=data.reduce((s,d)=>s+d.count,0);
+  if(!total)return '<div class="dash-empty">אין נתונים</div>';
+  let acc=0;const R=52,C=2*Math.PI*R;
+  const segs=data.map(d=>{
+    const frac=d.count/total;
+    const dash=frac*C;
+    const seg=`<circle cx="70" cy="70" r="${R}" fill="none" stroke="${d.color}" stroke-width="22" stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${-acc*C}" transform="rotate(-90 70 70)"/>`;
+    acc+=frac;return seg;
+  }).join('');
+  const legend=data.map(d=>`<div class="dash-legend-item"><span class="dash-legend-dot" style="background:${d.color}"></span>${esc(d.label)} <b>${d.count}</b> <span class="dash-legend-pct">(${Math.round(d.count/total*100)}%)</span></div>`).join('');
+  return `<div class="dash-donut-wrap">
+    <svg viewBox="0 0 140 140" class="dash-donut">${segs}
+      <text x="70" y="64" text-anchor="middle" class="dash-donut-total">${total}</text>
+      <text x="70" y="82" text-anchor="middle" class="dash-donut-label">לידים</text>
+    </svg>
+    <div class="dash-legend">${legend}</div>
+  </div>`;
+}
+
+function barChart(data,useColors){
+  if(!data.length)return '<div class="dash-empty">אין נתונים</div>';
+  const max=Math.max(...data.map(d=>d.count));
+  return `<div class="dash-bars">${data.map(d=>`
+    <div class="dash-bar-row">
+      <div class="dash-bar-label">${esc(d.label)}</div>
+      <div class="dash-bar-track">
+        <div class="dash-bar-fill" style="width:${Math.round(d.count/max*100)}%;background:${useColors&&d.color?d.color:'var(--gold)'}"></div>
+      </div>
+      <div class="dash-bar-val">${d.count}</div>
+    </div>`).join('')}</div>`;
+}
+
+function lineChart(data){
+  if(data.length<2)return '<div class="dash-empty">צריך לפחות חודשיים של נתונים</div>';
+  const max=Math.max(...data.map(d=>d.count),1);
+  const W=320,H=140,pad=28;
+  const stepX=(W-pad*2)/(data.length-1);
+  const pts=data.map((d,i)=>({x:pad+i*stepX,y:H-pad-(d.count/max)*(H-pad*2),...d}));
+  const path=pts.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const area=`M${pts[0].x} ${H-pad} `+pts.map(p=>`L${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')+` L${pts[pts.length-1].x} ${H-pad} Z`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="dash-line">
+    <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#lineGrad)"/>
+    <path d="${path}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--gold)"/>
+      <text x="${p.x.toFixed(1)}" y="${p.y-9}" text-anchor="middle" class="dash-line-val">${p.count}</text>
+      <text x="${p.x.toFixed(1)}" y="${H-10}" text-anchor="middle" class="dash-line-x">${esc(p.label)}</text>`).join('')}
+  </svg>`;
 }
 
 // ===== Calendar =====
