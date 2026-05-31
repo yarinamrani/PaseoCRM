@@ -283,6 +283,13 @@
   /* ===== Misc ===== */
   .empty{text-align:center;color:var(--muted-2);padding:50px;font-size:14px}
   .empty .big{font-family:'Frank Ruhl Libre',serif;font-size:18px;color:var(--muted);margin-bottom:6px}
+  .empty-sub{font-size:13px;color:var(--muted-2);margin-top:4px}
+  .empty-clean{padding:60px 30px}
+  .empty-clean .empty-emoji{font-size:52px;margin-bottom:16px;animation:emojiPop .4s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes emojiPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+  .empty-clean .big{font-size:22px;color:var(--txt-2)}
+  .empty-btn{margin-top:20px;background:var(--gold);color:#1a1206;border:none;border-radius:10px;padding:11px 24px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;transition:all .15s}
+  .empty-btn:hover{background:var(--gold-2);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,162,39,.3)}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--gold-dim);color:var(--txt);padding:10px 18px;border-radius:9px;font-size:13px;z-index:100;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s}
   .toast.show{opacity:1}
 
@@ -468,7 +475,7 @@ const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
 
 // ===== State =====
 let LEADS=[], ACTS={}; // ACTS[lead_id] = [activities]
-let view=(window.matchMedia&&window.matchMedia('(max-width:900px)').matches)?'table':'kanban', search='', filters={status:'',source:'',relevance:'',assigned:'',timeframe:''};
+let view=(window.matchMedia&&window.matchMedia('(max-width:900px)').matches)?'table':'kanban', search='', filters={status:'new',source:'',relevance:'',assigned:'',timeframe:''};
 let sortBy='received_at', sortDir='desc';
 let calRef=new Date();
 let openLeadId=null;
@@ -778,6 +785,27 @@ function filtered(){
   return arr;
 }
 
+// ===== Empty state =====
+function emptyStateHTML(){
+  if(filters.status==='new'&&!search&&!filters.relevance&&!filters.assigned&&!filters.timeframe){
+    return `<div class="empty empty-clean">
+      <div class="empty-emoji">🎉</div>
+      <div class="big">אין לידים חדשים כרגע</div>
+      <div class="empty-sub">כל הלידים החדשים טופלו. עבודה טובה!</div>
+      <button class="empty-btn" id="show-all-leads">הצג את כל הלידים</button>
+    </div>`;
+  }
+  return `<div class="empty"><div class="big">אין לידים</div><div class="empty-sub">נסה לשנות פילטרים או חיפוש</div></div>`;
+}
+function wireEmptyState(){
+  const b=document.getElementById('show-all-leads');
+  if(b)b.onclick=()=>{
+    filters.status='';
+    setupDropdown('dd-status','status',[{v:'',l:'כל הסטטוסים'},...STATUSES.map(s=>({v:s.k,l:s.l,c:s.c}))]);
+    draw();
+  };
+}
+
 // ===== Stats =====
 function drawStats(){
   // הסטטיסטיקות מבוססות על הטאב הנוכחי, תמיד מתעלמות מלא-רלוונטיים, ללא תלות בפילטרי הצד
@@ -815,7 +843,11 @@ function draw(){
 
 // ===== Kanban =====
 function drawKanban(){
+  // ה-Kanban הוא תצוגת הסטטוסים עצמה — פילטר סטטוס לא רלוונטי כאן (אחרת רוב העמודות ריקות)
+  const savedStatus=filters.status;
+  filters.status='';
   const data=filtered();
+  filters.status=savedStatus;
   $('#main').innerHTML=`<div class="board">${STATUSES.map(s=>{
     const items=data.filter(l=>l.status===s.k);
     return `<div class="col" data-status="${s.k}">
@@ -876,7 +908,7 @@ function cardHTML(l){
 // ===== Table =====
 function drawTable(){
   const data=filtered();
-  if(!data.length){$('#main').innerHTML=`<div class="empty"><div class="big">אין לידים</div>נסה לשנות פילטרים או חיפוש</div>`;return}
+  if(!data.length){$('#main').innerHTML=emptyStateHTML();wireEmptyState();return}
   const cols=[
     {k:'full_name',l:'שם'},
     {k:'phone',l:'טלפון'},
@@ -930,7 +962,7 @@ function drawTable(){
 // ===== Mobile Cards View =====
 function drawMobileCards(){
   const data=filtered();
-  if(!data.length){$('#main').innerHTML=`<div class="empty"><div class="big">אין לידים</div>נסה לשנות פילטרים או חיפוש</div>`;return}
+  if(!data.length){$('#main').innerHTML=emptyStateHTML();wireEmptyState();return}
 
   // במצב "לא רלוונטי" — רשימה פשוטה בלי קיבוץ לפי דחיפות (זה ארכיון)
   if(filters.relevance==='irrelevant'){
