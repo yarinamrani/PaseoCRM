@@ -85,6 +85,24 @@
   .pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:13px;cursor:pointer;transition:all .15s}
   .pill:hover{background:var(--panel-2)}
   .pill option{background:var(--panel-2)}
+
+  /* ===== Custom Dropdown ===== */
+  .dd{position:relative;flex-shrink:0}
+  .dd-trigger{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .dd-trigger:hover{background:var(--panel-2);border-color:var(--line)}
+  .dd-trigger.active{border-color:var(--gold-dim);background:var(--gold-soft);color:var(--gold-2)}
+  .dd-trigger .dd-arrow{font-size:10px;opacity:.6;transition:transform .15s}
+  .dd.open .dd-trigger .dd-arrow{transform:rotate(180deg)}
+  .dd.open .dd-trigger{border-color:var(--gold-dim);background:var(--panel-2)}
+  .dd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dd-dot-empty{width:8px;height:8px;flex-shrink:0}
+  .dd-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:180px;max-height:320px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:60;opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;transition:all .15s;transform-origin:top right}
+  .dd.open .dd-menu{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .dd-opt{display:flex;align-items:center;gap:9px;width:100%;background:transparent;border:none;color:var(--txt-2);padding:9px 11px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .12s;text-align:right}
+  .dd-opt:hover{background:var(--panel-3);color:var(--txt)}
+  .dd-opt.sel{background:var(--gold-soft);color:var(--gold-2);font-weight:600}
+  .dd-opt .dd-check{margin-right:auto;color:var(--gold);font-size:12px}
+
   .views{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .views button{background:none;border:none;color:var(--muted);padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
   .views button.active{background:var(--gold);color:#1a1206}
@@ -294,6 +312,15 @@
     .toolbar{padding:10px 14px;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
     .toolbar .search{min-width:140px;flex:0 0 auto;width:180px;padding:8px 12px;font-size:12px}
     .toolbar .pill{flex:0 0 auto;padding:8px 10px;font-size:12px}
+    .toolbar .dd-trigger{padding:8px 10px;font-size:12px}
+    /* במובייל: תפריט נפתח כ-bottom sheet */
+    .dd.open::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:75}
+    .dd-menu{position:fixed;top:auto;bottom:0;right:0;left:0;min-width:0;width:100%;max-height:60vh;
+      border-radius:18px 18px 0 0;padding:10px 10px calc(10px + env(safe-area-inset-bottom));z-index:76;
+      transform:translateY(100%) scale(1);transform-origin:bottom}
+    .dd.open .dd-menu{transform:translateY(0)}
+    .dd-opt{padding:13px 14px;font-size:15px}
+    .dd-menu::before{content:'';display:block;width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 10px}
     .views{flex:0 0 auto}
     .views button{padding:8px 12px;font-size:12px}
 
@@ -596,26 +623,10 @@ function renderShell(){
   <div class="stats" id="stats"></div>
   <div class="toolbar">
     <input class="search" id="q" placeholder="חיפוש לפי שם, טלפון, סוג אירוע, מייל..." />
-    <select class="pill" id="f-status">
-      <option value="">כל הסטטוסים</option>
-      ${STATUSES.map(s=>`<option value="${s.k}">${s.l}</option>`).join('')}
-    </select>
-    <select class="pill" id="f-rel">
-      <option value="">כל הרלוונטיות</option>
-      ${RELEVANCE.map(r=>`<option value="${r.k}">${r.l}</option>`).join('')}
-    </select>
-    <select class="pill" id="f-assigned">
-      <option value="">כל האחראים</option>
-      ${ASSIGNEES.map(a=>`<option value="${a}">${a}</option>`).join('')}
-      <option value="__none">לא משויך</option>
-    </select>
-    <select class="pill" id="f-time">
-      <option value="">כל התאריכים</option>
-      <option value="week">השבוע</option>
-      <option value="month">החודש</option>
-      <option value="future">עתידיים</option>
-      <option value="past">עבר</option>
-    </select>
+    <div class="dd" id="dd-status" data-filter="status"></div>
+    <div class="dd" id="dd-rel" data-filter="relevance"></div>
+    <div class="dd" id="dd-assigned" data-filter="assigned"></div>
+    <div class="dd" id="dd-time" data-filter="timeframe"></div>
     <div class="views">
       <button data-v="kanban" class="${view==='kanban'?'active':''}">לוח</button>
       <button data-v="table" class="${view==='table'?'active':''}">טבלה</button>
@@ -629,10 +640,13 @@ function renderShell(){
   $('#add-lead-btn').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#fab-add').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#q').oninput=e=>{search=e.target.value.trim().toLowerCase();draw()};
-  $('#f-status').onchange=e=>{filters.status=e.target.value;draw()};
-  $('#f-rel').onchange=e=>{filters.relevance=e.target.value;draw()};
-  $('#f-assigned').onchange=e=>{filters.assigned=e.target.value;draw()};
-  $('#f-time').onchange=e=>{filters.timeframe=e.target.value;draw()};
+
+  // Custom dropdowns
+  setupDropdown('dd-status','status',[{v:'',l:'כל הסטטוסים'},...STATUSES.map(s=>({v:s.k,l:s.l,c:s.c}))]);
+  setupDropdown('dd-rel','relevance',[{v:'',l:'כל הרלוונטיות'},...RELEVANCE.map(r=>({v:r.k,l:r.l}))]);
+  setupDropdown('dd-assigned','assigned',[{v:'',l:'כל האחראים'},...ASSIGNEES.map(a=>({v:a,l:a})),{v:'__none',l:'לא משויך'}]);
+  setupDropdown('dd-time','timeframe',[{v:'',l:'כל התאריכים'},{v:'week',l:'השבוע'},{v:'month',l:'החודש'},{v:'future',l:'עתידיים'},{v:'past',l:'עבר'}]);
+
   $$('.views button').forEach(b=>b.onclick=()=>{
     view=b.dataset.v;
     $$('.views button').forEach(x=>x.classList.toggle('active',x===b));
@@ -667,6 +681,49 @@ function drawSourceTabs(){
   </button>`).join('');
   $$('.src-tab',el).forEach(b=>b.onclick=()=>{sourceTab=b.dataset.src;draw()});
 }
+
+// ===== Custom Dropdown =====
+function setupDropdown(elId, filterKey, options){
+  const el=document.getElementById(elId);if(!el)return;
+  const render=()=>{
+    const cur=options.find(o=>o.v===filters[filterKey])||options[0];
+    const isActive=filters[filterKey]!=='';
+    el.innerHTML=`
+      <button class="dd-trigger ${isActive?'active':''}" type="button">
+        ${cur.c?`<span class="dd-dot" style="background:${cur.c}"></span>`:''}
+        <span class="dd-label">${esc(cur.l)}</span>
+        <span class="dd-arrow">▾</span>
+      </button>
+      <div class="dd-menu">
+        ${options.map(o=>`<button class="dd-opt ${o.v===filters[filterKey]?'sel':''}" data-v="${esc(o.v)}" type="button">
+          ${o.c?`<span class="dd-dot" style="background:${o.c}"></span>`:'<span class="dd-dot-empty"></span>'}
+          <span>${esc(o.l)}</span>
+          ${o.v===filters[filterKey]?'<span class="dd-check">✓</span>':''}
+        </button>`).join('')}
+      </div>`;
+    const trigger=el.querySelector('.dd-trigger');
+    const menu=el.querySelector('.dd-menu');
+    trigger.onclick=(e)=>{
+      e.stopPropagation();
+      const isOpen=el.classList.contains('open');
+      // סגור את כל שאר ה-dropdowns
+      document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+      if(!isOpen)el.classList.add('open');
+    };
+    el.querySelectorAll('.dd-opt').forEach(opt=>opt.onclick=(e)=>{
+      e.stopPropagation();
+      filters[filterKey]=opt.dataset.v;
+      el.classList.remove('open');
+      render();
+      draw();
+    });
+  };
+  render();
+}
+// סגירת dropdowns בלחיצה בחוץ
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+});
 
 // ===== Filter pipeline =====
 function inTimeframe(l){
