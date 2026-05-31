@@ -278,25 +278,54 @@
     .live{font-size:10px}
     .pill,.search{font-size:13px}
 
-    /* Stats — 2 טורים צפופים בלי חורים */
-    .stats{grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 14px 0}
-    .stat{padding:10px 12px}
-    .stat .n{font-size:20px}
-    .stat .l{font-size:10px}
-    .stat:nth-child(5){grid-column:1/-1} /* המרה — רוחב מלא, בלי חור */
+    /* Stats — שורה קומפקטית 4 מספרים אופקיים */
+    .stats{grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px 0}
+    .stat{padding:8px 8px;text-align:center}
+    .stat::before{display:none} /* מסירים פס זהב כדי לחסוך מקום */
+    .stat .n{font-size:18px}
+    .stat .l{font-size:9px;letter-spacing:0;margin-top:2px}
+    .stat:nth-child(5){display:none} /* מסתירים המרה במובייל */
 
     /* Source tabs — גלילה אופקית חלקה עם snap */
     .src-tabs{padding:10px 14px 0;gap:2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
     .src-tab{padding:9px 14px 11px;scroll-snap-align:start;font-size:13px}
 
     /* Toolbar — נגלל אופקית במקום להישבר */
-    .toolbar{padding:12px 14px;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .toolbar .search{min-width:160px;flex:0 0 auto;width:200px}
-    .toolbar .pill{flex:0 0 auto}
+    .toolbar{padding:10px 14px;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .toolbar .search{min-width:140px;flex:0 0 auto;width:180px;padding:8px 12px;font-size:12px}
+    .toolbar .pill{flex:0 0 auto;padding:8px 10px;font-size:12px}
     .views{flex:0 0 auto}
+    .views button{padding:8px 12px;font-size:12px}
 
     /* Content */
     .content{padding:12px 14px 110px} /* תחתית גדולה כדי שה-FAB לא יסתיר */
+
+    /* Mobile cards — תצוגת כרטיסים */
+    .mob-cards{display:flex;flex-direction:column;gap:18px}
+    .mob-section{display:flex;flex-direction:column;gap:8px}
+    .mob-section-head{display:flex;align-items:center;gap:8px;padding:4px 4px 6px;border-bottom:1px solid var(--line-soft);margin-bottom:4px}
+    .mob-section-icon{font-size:14px}
+    .mob-section-title{font-family:'Frank Ruhl Libre',serif;font-size:15px;font-weight:700;color:var(--gold);letter-spacing:.5px}
+    .mob-section-cnt{background:var(--gold-soft);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-right:auto}
+    .mob-card{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;cursor:pointer;transition:all .15s;border-right:3px solid var(--st-new);display:flex;flex-direction:column;gap:5px}
+    .mob-card:active{background:var(--panel-3);transform:scale(.99)}
+    .mob-card.irrelevant{opacity:.55}
+    .mob-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px}
+    .mob-card-name{font-weight:700;font-size:16px;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mob-card-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
+    .mob-card-status .dot{width:5px;height:5px;border-radius:50%}
+    .mob-card-row{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt-2)}
+    .mob-card-row .ico{font-size:13px;opacity:.7;width:18px;text-align:center;flex-shrink:0}
+    .mob-card-row .days{margin-right:auto}
+    .mob-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;padding-top:8px;border-top:1px solid var(--line-soft)}
+    .mob-card-meta{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+    .mob-card-meta .chip,.mob-card-meta .rel-pill{font-size:10px}
+    .mob-card-actions{display:flex;gap:6px;flex-shrink:0}
+    .mob-card-action{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);font-size:15px;text-decoration:none;transition:all .15s}
+    .mob-card-action.call{color:var(--info)}
+    .mob-card-action.call:active{background:var(--info);color:#fff;transform:scale(.92)}
+    .mob-card-action.wa{color:#25d366}
+    .mob-card-action.wa:active{background:#25d366;color:#fff;transform:scale(.92)}
 
     /* Kanban — עמודות צרות יותר */
     .col{width:78vw;max-width:300px}
@@ -694,12 +723,17 @@ function drawStats(){
     <div class="stat"><div class="n">${conv}%</div><div class="l">המרה</div></div>`;
 }
 
+function isMobile(){return window.matchMedia&&window.matchMedia('(max-width:900px)').matches}
+
 // ===== Draw dispatcher =====
 function draw(){
   drawSourceTabs();
   drawStats();
   if(view==='kanban')drawKanban();
-  else if(view==='table')drawTable();
+  else if(view==='table'){
+    if(isMobile())drawMobileCards();
+    else drawTable();
+  }
   else drawCalendar();
 }
 
@@ -815,6 +849,94 @@ function drawTable(){
     openDetail(tr.dataset.id);
   });
   $$('button[data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteLead(b.dataset.del)});
+}
+
+// ===== Mobile Cards View =====
+function drawMobileCards(){
+  const data=filtered();
+  if(!data.length){$('#main').innerHTML=`<div class="empty"><div class="big">אין לידים</div>נסה לשנות פילטרים או חיפוש</div>`;return}
+
+  // קיבוץ לפי דחיפות
+  const groups={today:[],week:[],month:[],future:[],past:[],nodate:[]};
+  data.forEach(l=>{
+    const n=daysUntil(l.event_date);
+    if(n==null)groups.nodate.push(l);
+    else if(n===0)groups.today.push(l);
+    else if(n>0&&n<=7)groups.week.push(l);
+    else if(n>7&&n<=30)groups.month.push(l);
+    else if(n>30)groups.future.push(l);
+    else groups.past.push(l);
+  });
+  // מיון פנימי לפי תאריך אירוע (קרוב ביותר ראשון), הפסט ממוין מהקרוב ביותר
+  const sortFn=(a,b)=>{
+    const da=a.event_date?new Date(a.event_date).getTime():Infinity;
+    const db=b.event_date?new Date(b.event_date).getTime():Infinity;
+    return da-db;
+  };
+  groups.today.sort(sortFn);
+  groups.week.sort(sortFn);
+  groups.month.sort(sortFn);
+  groups.future.sort(sortFn);
+  groups.past.sort((a,b)=>new Date(b.event_date)-new Date(a.event_date)); // עבר - הכי קרוב לאחור
+  groups.nodate.sort((a,b)=>new Date(b.received_at||0)-new Date(a.received_at||0));
+
+  const sections=[
+    {key:'today',title:'היום',cls:'today',icon:'🔥'},
+    {key:'week',title:'השבוע',cls:'week',icon:'⚡'},
+    {key:'month',title:'החודש',cls:'month',icon:'📅'},
+    {key:'future',title:'עתידי',cls:'future',icon:'🗓️'},
+    {key:'past',title:'אירועים שעברו',cls:'past',icon:'⏮'},
+    {key:'nodate',title:'ללא תאריך',cls:'nodate',icon:'❓'},
+  ].filter(s=>groups[s.key].length>0);
+
+  $('#main').innerHTML=`<div class="mob-cards">${sections.map(s=>`
+    <div class="mob-section">
+      <div class="mob-section-head">
+        <span class="mob-section-icon">${s.icon}</span>
+        <span class="mob-section-title">${s.title}</span>
+        <span class="mob-section-cnt">${groups[s.key].length}</span>
+      </div>
+      ${groups[s.key].map(mobCardHTML).join('')}
+    </div>
+  `).join('')}</div>`;
+
+  $$('.mob-card').forEach(c=>{
+    c.onclick=e=>{
+      if(e.target.closest('a')||e.target.closest('.mob-card-action'))return;
+      openDetail(c.dataset.id);
+    };
+  });
+}
+
+function mobCardHTML(l){
+  const st=STATUS_MAP[l.status]||STATUSES[0];
+  const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
+  const irrel=l.relevance==='irrelevant';
+  const wa=waLink(l.phone);
+  const dateStr=l.event_date?fmtDate(l.event_date):(l.event_date_raw||'');
+  const dow=l.event_date?dayOfWeek(l.event_date):'';
+  const daysHTML=l.event_date?daysLabel(l.event_date):'';
+  return `<div class="mob-card ${irrel?'irrelevant':''}" data-id="${l.id}" style="border-right-color:${st.c}">
+    <div class="mob-card-top">
+      <div class="mob-card-name">${esc(l.full_name)||'<span style="color:var(--muted-2)">ללא שם</span>'}</div>
+      <span class="mob-card-status" style="background:${st.c}22;color:${st.c};border:1px solid ${st.c}66"><span class="dot" style="background:${st.c}"></span>${st.l}</span>
+    </div>
+    ${l.event_type?`<div class="mob-card-row"><span class="ico">🎉</span><span>${esc(l.event_type)}</span></div>`:''}
+    ${dateStr?`<div class="mob-card-row"><span class="ico">📅</span><span>${dateStr}${dow?' · '+dow:''}</span>${daysHTML}</div>`:''}
+    ${l.guests_raw&&l.guests_raw!=='0'?`<div class="mob-card-row"><span class="ico">👥</span><span>${esc(l.guests_raw)} אורחים</span></div>`:''}
+    ${l.hostess?`<div class="mob-card-row"><span class="ico">📞</span><span>מארחת: ${esc(l.hostess)}</span></div>`:''}
+    <div class="mob-card-foot">
+      <div class="mob-card-meta">
+        <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
+        ${l.relevance&&l.relevance!=='unknown'?`<span class="rel-pill ${rel.cls}">${rel.l}</span>`:''}
+      </div>
+      <div class="mob-card-actions">
+        ${l.phone?`<a class="mob-card-action call" href="tel:${esc(l.phone)}" onclick="event.stopPropagation()">📞</a>`:''}
+        ${wa?`<a class="mob-card-action wa" href="${wa}" target="_blank" onclick="event.stopPropagation()">💬</a>`:''}
+      </div>
+    </div>
+  </div>`;
 }
 
 // ===== Calendar =====
