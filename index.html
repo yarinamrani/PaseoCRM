@@ -317,8 +317,9 @@
     .dd.open::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:75}
     .dd-menu{position:fixed;top:auto;bottom:0;right:0;left:0;min-width:0;width:100%;max-height:60vh;
       border-radius:18px 18px 0 0;padding:10px 10px calc(10px + env(safe-area-inset-bottom));z-index:76;
+      opacity:1;pointer-events:none;
       transform:translateY(100%) scale(1);transform-origin:bottom}
-    .dd.open .dd-menu{transform:translateY(0)}
+    .dd.open .dd-menu{transform:translateY(0);opacity:1;pointer-events:auto}
     .dd-opt{padding:13px 14px;font-size:15px}
     .dd-menu::before{content:'';display:block;width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 10px}
     .views{flex:0 0 auto}
