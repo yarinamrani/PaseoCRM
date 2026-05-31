@@ -211,6 +211,12 @@
   .field .val a{color:var(--gold);text-decoration:none}
 
   .quick-actions{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .menu-actions{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:18px}
+  .menu-actions-label{font-size:11px;color:var(--muted);margin-bottom:9px;font-weight:600}
+  .menu-actions-btns{display:flex;gap:8px}
+  .menu-btn{flex:1;justify-content:center;border-color:var(--line)}
+  .menu-btn.dairy:hover{border-color:#6fdca0;color:#6fdca0}
+  .menu-btn.meat:hover{border-color:#e0816a;color:#e0816a}
   .qa{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:8px 14px;border-radius:9px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-weight:500}
   .qa:hover{background:var(--panel-2);border-color:var(--gold-dim)}
   .qa.wa:hover{border-color:#25d366;color:#25d366}
@@ -541,6 +547,21 @@ function fmtRel(ts){
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
 const WA_OPENING_MSG='היי, מדברים מהפסאו 🌅 ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+// לינקים לתפריטי האירועים (מתארחים ב-repo PaseoCRM)
+const MENU_DAIRY_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-dairy.pdf';
+const MENU_MEAT_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-meat.pdf';
+function menuMsg(kind,name){
+  const greeting=name?`היי ${name}, `:'היי, ';
+  const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
+  const label=kind==='dairy'?'החלבי':'הבשרי';
+  return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו 🌅\nנשמח לענות על כל שאלה ולהתאים לכם חבילה מושלמת.\n\n${url}`;
+}
+function sendMenu(kind,lead){
+  if(!lead.phone){showToast('אין מספר טלפון לליד');return}
+  const d=lead.phone.replace(/\D/g,'').replace(/^0/,'972');
+  const msg=menuMsg(kind,lead.full_name);
+  window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
+}
 function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(WA_OPENING_MSG)}`}
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
@@ -1312,6 +1333,15 @@ function drawDetail(){
         <button class="qa del" id="x-del">🗑 מחק ליד</button>
       </div>
 
+      <!-- Send menu -->
+      ${l.phone?`<div class="menu-actions">
+        <div class="menu-actions-label">שליחת תפריט אירועים בוואטסאפ:</div>
+        <div class="menu-actions-btns">
+          <button class="qa menu-btn dairy" id="x-menu-dairy">📄 תפריט חלבי</button>
+          <button class="qa menu-btn meat" id="x-menu-meat">🥩 תפריט בשרי</button>
+        </div>
+      </div>`:''}
+
       <!-- Status -->
       <div class="detail-section">
         <div class="sec-title">סטטוס</div>
@@ -1402,6 +1432,8 @@ function drawDetail(){
   // Wire up
   $('#x-close',el).onclick=closeDetail;
   $('#x-del',el).onclick=()=>deleteLead(l.id);
+  const md=$('#x-menu-dairy',el);if(md)md.onclick=()=>sendMenu('dairy',l);
+  const mm=$('#x-menu-meat',el);if(mm)mm.onclick=()=>sendMenu('meat',l);
 
   // Status
   $$('#x-status button',el).forEach(b=>b.onclick=()=>{
