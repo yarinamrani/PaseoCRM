@@ -549,17 +549,17 @@ function fmtRel(ts){
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
 function openingMsg(name){
-  const greeting=name?`היי ${name}! `:'היי! ';
-  return `${greeting}כל כך שמחנו לראות שהשארת פרטים על אירוע אצלנו בפסאו! מתי נוח לך שנדבר ונתחיל לתכנן יחד משהו מושלם?`;
+  const greeting=name?`היי ${name}, `:'היי, ';
+  return `${greeting}מדברים מפסאו בנוגע לאירוע שהשארת אצלנו פרטים. נשמח לדבר ולעזור לכם לתכנן — מתי נוח לך?`;
 }
 // לינקים לתפריטי האירועים (קישורי Bitly מקוצרים -> PDF ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://bit.ly/3PW4TgD';
 const MENU_MEAT_URL='https://bit.ly/4dIojP6';
 function menuMsg(kind,name){
-  const greeting=name?`היי ${name}! `:'היי! ';
+  const greeting=name?`היי ${name}, `:'היי, ';
   const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
   const label=kind==='dairy'?'החלבי':'הבשרי';
-  return `${greeting}איזה כיף — שמחים לצרף לכם את תפריט האירועים ${label} שלנו בפסאו! נשמח לענות על כל שאלה ולתפור לכם חבילה מושלמת בדיוק בשבילכם.\n\n${url}`;
+  return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו. נשמח לענות על כל שאלה ולהתאים לכם חבילה שמתאימה בדיוק לאירוע שלכם.\n\n${url}`;
 }
 function sendMenu(kind,lead){
   if(!lead.phone){showToast('אין מספר טלפון לליד');return}
