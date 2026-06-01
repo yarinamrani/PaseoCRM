@@ -548,7 +548,7 @@ function fmtRel(ts){
   return d.toLocaleDateString('he-IL');
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
-const WA_OPENING_MSG='היי, מדברים מהפסאו ✨ ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+const WA_OPENING_MSG='היי, מדברים מהפסאו, ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
 // לינקים לתפריטי האירועים (קישורי Bitly מקוצרים -> PDF ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://bit.ly/3PW4TgD';
 const MENU_MEAT_URL='https://bit.ly/4dIojP6';
@@ -556,7 +556,7 @@ function menuMsg(kind,name){
   const greeting=name?`היי ${name}, `:'היי, ';
   const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
   const label=kind==='dairy'?'החלבי':'הבשרי';
-  return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו ✨\nנשמח לענות על כל שאלה ולהתאים לכם חבילה מושלמת.\n\n${url}`;
+  return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו.\nנשמח לענות על כל שאלה ולהתאים לכם חבילה מושלמת.\n\n${url}`;
 }
 function sendMenu(kind,lead){
   if(!lead.phone){showToast('אין מספר טלפון לליד');return}
