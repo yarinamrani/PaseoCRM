@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Paseo">
+  <rect width="512" height="512" fill="#0c0e12"/>
+  <g stroke="#c9a227" stroke-linecap="round" fill="none">
+    <g stroke-width="11" opacity="0.95">
+      <line x1="256" y1="120" x2="256" y2="168"/>
+      <line x1="206" y1="132" x2="222" y2="176"/>
+      <line x1="306" y1="132" x2="290" y2="176"/>
+      <line x1="164" y1="164" x2="192" y2="192"/>
+      <line x1="348" y1="164" x2="320" y2="192"/>
+    </g>
+    <path d="M 192 256 A 64 64 0 0 1 320 256" stroke-width="13"/>
+    <line x1="110" y1="256" x2="186" y2="256" stroke-width="11"/>
+    <line x1="326" y1="256" x2="402" y2="256" stroke-width="11"/>
+  </g>
+  <text x="256" y="348" text-anchor="middle" fill="#c9a227"
+        font-family="'Frank Ruhl Libre', Georgia, serif" font-size="64" font-weight="500" letter-spacing="8">PASEO</text>
+</svg>

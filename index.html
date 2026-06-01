@@ -2,7 +2,14 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0c0e12" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Paseo CRM" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://vzeowbriddhvhpishmhn.supabase.co wss://vzeowbriddhvhpishmhn.supabase.co; img-src 'self' data: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
 <title>PASEO · ניהול לידים לאירועים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -428,6 +435,27 @@
     font-size:28px;font-weight:300;line-height:1;
     box-shadow:0 6px 20px rgba(201,162,39,.45);transition:transform .15s}
   .fab:active{transform:scale(.92)}
+
+  /* ===== Avatars ===== */
+  .avatar{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;width:30px;height:30px;font-size:13px;line-height:1}
+  .avatar.av-sm{width:26px;height:26px;font-size:12px}
+  .avatar.av-lg{width:46px;height:46px;font-size:19px;font-family:'Frank Ruhl Libre',serif}
+  .card .name .name-main{display:flex;align-items:center;gap:8px;min-width:0}
+  .card .name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mob-card-name-wrap{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+  .mob-card-name-wrap .mob-card-name{flex:1}
+
+  /* ===== Toast variants ===== */
+  .toast.success{border-color:var(--ok);color:#d6f5e3}
+  .toast.error{border-color:var(--danger);color:#f9d6d2}
+
+  /* ===== Accessibility: visible keyboard focus ===== */
+  :focus-visible{outline:2px solid var(--gold-2);outline-offset:2px;border-radius:5px}
+  button:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
+
+  /* ===== Bidi: keep phone numbers / emails LTR inside RTL ===== */
+  a[href^="tel:"],a[href^="mailto:"]{unicode-bidi:plaintext}
+  .num{direction:ltr;unicode-bidi:isolate;display:inline-block}
 </style>
 </head>
 <body>
@@ -562,13 +590,21 @@ function menuMsg(kind,name){
   return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו. נשמח לענות על כל שאלה ולהתאים לכם חבילה שמתאימה בדיוק לאירוע שלכם.\n\n${url}`;
 }
 function sendMenu(kind,lead){
-  if(!lead.phone){showToast('אין מספר טלפון לליד');return}
+  if(!lead.phone){showToast('אין מספר טלפון לליד','error');return}
   const d=lead.phone.replace(/\D/g,'').replace(/^0/,'972');
   const msg=menuMsg(kind,lead.full_name);
   window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 function waLink(p,name){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(openingMsg(name))}`}
-function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function avatarHTML(name,cls){
+  const ch=(name||'').trim();
+  const initial=ch?[...ch][0].toUpperCase():'?';
+  const palette=['#c9a227','#4a90d9','#9b59b6','#16a085','#e67e22','#2ecc71','#e74c3c','#5d6d7e'];
+  let h=0;for(let i=0;i<ch.length;i++)h=(h*31+ch.charCodeAt(i))>>>0;
+  const c=palette[h%palette.length];
+  return `<span class="avatar ${cls||''}" style="background:${c}22;color:${c};border:1px solid ${c}55">${esc(initial)}</span>`;
+}
+function showToast(msg,type){const t=$('#toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(()=>t.className='toast',2200)}
 
 // ===== Data =====
 async function loadLeads(){
@@ -584,7 +620,7 @@ async function loadActs(leadId){
 async function updateLead(id,patch){
   Object.assign(LEADS.find(x=>x.id===id)||{},patch);
   const {error}=await sb.from('crm_leads').update(patch).eq('id',id);
-  if(error){console.error(error);showToast('עדכון נכשל: '+error.message);return false}
+  if(error){console.error(error);showToast('עדכון נכשל: '+error.message,'error');return false}
   draw();return true;
 }
 async function deleteLead(id){
@@ -592,14 +628,14 @@ async function deleteLead(id){
   const nm=l?(l.full_name||'הליד'):'הליד';
   if(!confirm(`למחוק את "${nm}"? הפעולה אינה הפיכה.`))return;
   const {error}=await sb.from('crm_leads').delete().eq('id',id);
-  if(error){showToast('מחיקה נכשלה');return}
+  if(error){showToast('מחיקה נכשלה','error');return}
   LEADS=LEADS.filter(x=>x.id!==id);
   if(openLeadId===id)closeDetail();
-  draw();showToast('הליד נמחק');
+  draw();showToast('הליד נמחק','success');
 }
 async function createLead(){
-  if(!addDraft.full_name.trim()){showToast('חסר שם');return}
-  if(!addDraft.phone.trim()){showToast('חסר טלפון');return}
+  if(!addDraft.full_name.trim()){showToast('חסר שם','error');return}
+  if(!addDraft.phone.trim()){showToast('חסר טלפון','error');return}
   const row={
     source:'phone',
     inbox:null,
@@ -627,22 +663,22 @@ async function createLead(){
   if(d.length===10&&d[0]==='0')row.phone=d.slice(0,3)+'-'+d.slice(3);
 
   const {data,error}=await sb.from('crm_leads').insert(row).select().single();
-  if(error){showToast('יצירה נכשלה: '+error.message);return}
+  if(error){showToast('יצירה נכשלה: '+error.message,'error');return}
   LEADS=[data,...LEADS];
   addDraft={full_name:'',phone:'',event_type:'',event_date:'',event_time:'',guests_raw:'',notes:'',hostess:''};
   showAddModal=false;
   draw();
-  showToast('הליד נוסף');
+  showToast('הליד נוסף','success');
   openDetail(data.id);
 }
 async function addActivity(leadId,kind,body,actor){
   if(!body.trim())return;
   const row={lead_id:leadId,kind,body:body.trim(),actor};
   const {data,error}=await sb.from('crm_activities').insert(row).select().single();
-  if(error){showToast('הוספה נכשלה');return}
+  if(error){showToast('הוספה נכשלה','error');return}
   ACTS[leadId]=[data,...(ACTS[leadId]||[])];
   actDraft={kind:'call',body:'',actor};
-  drawDetail();showToast('נוסף');
+  drawDetail();showToast('נוסף','success');
 }
 
 // ===== Auth =====
@@ -797,7 +833,7 @@ function closeAllDropdowns(){
 // ===== Export to Excel (CSV + BOM for Hebrew) =====
 function exportExcel(){
   const data=filtered();
-  if(!data.length){showToast('אין לידים לייצוא');return}
+  if(!data.length){showToast('אין לידים לייצוא','error');return}
   const headers=['שם','טלפון','אימייל','מקור','סטטוס','רלוונטיות','סוג אירוע','תאריך אירוע','שעה','אורחים','אחראי','מארחת','הערות','התקבל'];
   const srcL={callevent:'Call Event',paseo_form:'טופס אתר',phone:'טלפוני'};
   const rows=data.map(l=>[
@@ -822,7 +858,7 @@ function exportExcel(){
   a.download=`לידים_פסאו_${tabName}_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast(`יוצאו ${data.length} לידים`);
+  showToast(`יוצאו ${data.length} לידים`,'success');
 }
 // סגירת dropdowns בלחיצה בחוץ — נרשם פעם אחת בלבד
 if(!window.__ddCloseBound){
@@ -980,13 +1016,13 @@ function cardHTML(l){
   const irrel=l.relevance==='irrelevant';
   return `<div class="card ${irrel?'irrelevant':''}" data-id="${l.id}" style="border-right-color:${st.c}">
     <div class="name">
-      <span>${esc(l.full_name)||'<span style="color:var(--muted-2)">ללא שם</span>'}</span>
+      <span class="name-main">${avatarHTML(l.full_name,'av-sm')}<span class="nm">${esc(l.full_name)||'<span style="color:var(--muted-2)">ללא שם</span>'}</span></span>
       ${today?'<span class="urgent">היום</span>':urgent?'<span class="urgent">דחוף</span>':''}
     </div>
     ${l.event_type?`<div class="row"><span class="ico">🎉</span>${esc(l.event_type)}</div>`:''}
     ${l.event_date?`<div class="row"><span class="ico">📅</span>${fmtDate(l.event_date)} · ${dayOfWeek(l.event_date)} ${daysLabel(l.event_date)}</div>`:l.event_date_raw?`<div class="row"><span class="ico">📅</span>${esc(l.event_date_raw)}</div>`:''}
     ${l.guests_raw&&l.guests_raw!=='0'?`<div class="row"><span class="ico">👥</span>${esc(l.guests_raw)} אורחים</div>`:''}
-    ${l.phone?`<div class="row"><span class="ico">📞</span>${esc(l.phone)}</div>`:''}
+    ${l.phone?`<div class="row"><span class="ico">📞</span><span class="num">${esc(l.phone)}</span></div>`:''}
     <div class="footer">
       <div class="badges">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
@@ -1128,7 +1164,7 @@ function mobCardHTML(l){
   const daysHTML=l.event_date?daysLabel(l.event_date):'';
   return `<div class="mob-card ${irrel?'irrelevant':''}" data-id="${l.id}" style="border-right-color:${st.c}">
     <div class="mob-card-top">
-      <div class="mob-card-name">${esc(l.full_name)||'<span style="color:var(--muted-2)">ללא שם</span>'}</div>
+      <div class="mob-card-name-wrap">${avatarHTML(l.full_name)}<div class="mob-card-name">${esc(l.full_name)||'<span style="color:var(--muted-2)">ללא שם</span>'}</div></div>
       <span class="mob-card-status" style="background:${st.c}22;color:${st.c};border:1px solid ${st.c}66"><span class="dot" style="background:${st.c}"></span>${st.l}</span>
     </div>
     ${l.event_type?`<div class="mob-card-row"><span class="ico">🎉</span><span>${esc(l.event_type)}</span></div>`:''}
@@ -1323,6 +1359,7 @@ function drawDetail(){
 
   el.innerHTML=`
     <div class="detail-head">
+      ${avatarHTML(l.full_name,'av-lg')}
       <div class="who">
         <h2 class="serif">${esc(l.full_name)||'ללא שם'}</h2>
         <div class="meta-line">${esc(l.event_type)||'אירוע לא מוגדר'} · ${SRC_LABEL[l.source]||l.source} · התקבל ${fmtRel(l.received_at)}</div>
@@ -1512,7 +1549,7 @@ function drawDetail(){
     bar.classList.remove('saving');
     if(ok){
       updateSaveBar();
-      showToast('נשמר');
+      showToast('נשמר','success');
     } else {
       // החזר את ה-pending אם נכשל
       Object.assign(pendingEdits,patch);
