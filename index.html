@@ -548,15 +548,18 @@ function fmtRel(ts){
   return d.toLocaleDateString('he-IL');
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
-const WA_OPENING_MSG='היי, מדברים מהפסאו, ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+function openingMsg(name){
+  const greeting=name?`היי ${name}! `:'היי! ';
+  return `${greeting}כל כך שמחנו לראות שהשארת פרטים על אירוע אצלנו בפסאו! מתי נוח לך שנדבר ונתחיל לתכנן יחד משהו מושלם?`;
+}
 // לינקים לתפריטי האירועים (קישורי Bitly מקוצרים -> PDF ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://bit.ly/3PW4TgD';
 const MENU_MEAT_URL='https://bit.ly/4dIojP6';
 function menuMsg(kind,name){
-  const greeting=name?`היי ${name}, `:'היי, ';
+  const greeting=name?`היי ${name}! `:'היי! ';
   const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
   const label=kind==='dairy'?'החלבי':'הבשרי';
-  return `${greeting}מצרפים את תפריט האירועים ${label} שלנו בפסאו.\nנשמח לענות על כל שאלה ולהתאים לכם חבילה מושלמת.\n\n${url}`;
+  return `${greeting}איזה כיף — שמחים לצרף לכם את תפריט האירועים ${label} שלנו בפסאו! נשמח לענות על כל שאלה ולתפור לכם חבילה מושלמת בדיוק בשבילכם.\n\n${url}`;
 }
 function sendMenu(kind,lead){
   if(!lead.phone){showToast('אין מספר טלפון לליד');return}
@@ -564,7 +567,7 @@ function sendMenu(kind,lead){
   const msg=menuMsg(kind,lead.full_name);
   window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
 }
-function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(WA_OPENING_MSG)}`}
+function waLink(p,name){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(openingMsg(name))}`}
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
 // ===== Data =====
@@ -972,7 +975,7 @@ function cardHTML(l){
   const n=daysUntil(l.event_date);
   const urgent=n!=null&&n>=0&&n<=7;
   const today=n===0;
-  const wa=waLink(l.phone);
+  const wa=waLink(l.phone,l.full_name);
   const st=STATUS_MAP[l.status]||STATUSES[0];
   const irrel=l.relevance==='irrelevant';
   return `<div class="card ${irrel?'irrelevant':''}" data-id="${l.id}" style="border-right-color:${st.c}">
@@ -1020,7 +1023,7 @@ function drawTable(){
       const cls=[l.relevance==='irrelevant'?'irrelevant':'',n===0?'today':(n!=null&&n>=0&&n<=7)?'urgent':''].filter(Boolean).join(' ');
       const st=STATUS_MAP[l.status]||STATUSES[0];
       const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
-      const wa=waLink(l.phone);
+      const wa=waLink(l.phone,l.full_name);
       return `<tr class="${cls}" data-id="${l.id}">
         <td><b>${esc(l.full_name)||'—'}</b></td>
         <td>${l.phone?`<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${wa?` · <a href="${wa}" target="_blank">💬</a>`:''}`:'—'}</td>
@@ -1119,7 +1122,7 @@ function mobCardHTML(l){
   const st=STATUS_MAP[l.status]||STATUSES[0];
   const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
   const irrel=l.relevance==='irrelevant';
-  const wa=waLink(l.phone);
+  const wa=waLink(l.phone,l.full_name);
   const dateStr=l.event_date?fmtDate(l.event_date):(l.event_date_raw||'');
   const dow=l.event_date?dayOfWeek(l.event_date):'';
   const daysHTML=l.event_date?daysLabel(l.event_date):'';
@@ -1314,7 +1317,7 @@ function drawDetail(){
   if(!openLeadId)return;
   const el=document.querySelector('.detail');if(!el)return;
   const l=LEADS.find(x=>x.id===openLeadId);if(!l)return;
-  const wa=waLink(l.phone);
+  const wa=waLink(l.phone,l.full_name);
   const acts=ACTS[l.id]||[];
   const st=STATUS_MAP[l.status]||STATUSES[0];
 
