@@ -559,11 +559,10 @@ const esc=s=>(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt
 function daysUntil(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);const e=new Date(d);return Math.round((e-t)/864e5)}
 function daysLabel(d){
   const n=daysUntil(d);if(n==null)return '';
-  if(n<0)return `<span class="days past">עבר ${-n}י</span>`;
+  if(n<0)return `<span class="days past">לפני ${-n===1?'יום':-n+' ימים'}</span>`;
   if(n===0)return `<span class="days today">היום</span>`;
-  if(n<=7)return `<span class="days soon">${n}י</span>`;
-  if(n<=30)return `<span class="days future">${n}י</span>`;
-  return `<span class="days future">${n}י</span>`;
+  if(n<=7)return `<span class="days soon">בעוד ${n===1?'יום':n+' ימים'}</span>`;
+  return `<span class="days future">בעוד ${n} ימים</span>`;
 }
 function fmtDate(d){if(!d)return '';return d.split('-').reverse().join('.')}
 function fmtRel(ts){
