@@ -464,6 +464,21 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+// ===== Boot safety net: never leave a silent blank screen =====
+function __bootFail(detail){
+  const app=document.getElementById('app');
+  if(!app||app.innerHTML.trim()!=='')return;
+  app.innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;font-family:Heebo,sans-serif;color:#e8eaed">'
+    +'<div style="font-size:44px">⚠️</div>'
+    +'<div style="font-size:18px;font-weight:700">הטעינה לא הושלמה</div>'
+    +'<div style="font-size:13px;color:#8b93a1;max-width:320px;line-height:1.6">ייתכן שחיבור הרשת קטע את טעינת האפליקציה. בדקו את החיבור ונסו שוב.</div>'
+    +'<button onclick="location.reload()" style="background:#c9a227;color:#1a1206;border:none;border-radius:9px;padding:11px 26px;font-weight:700;font-size:14px;cursor:pointer">רענון</button>'
+    +'<div style="font-size:10px;color:#6c7380;max-width:320px;word-break:break-word">'+(detail||'')+'</div></div>';
+}
+window.addEventListener('error',e=>__bootFail(e&&e.message?String(e.message).slice(0,160):''));
+window.addEventListener('unhandledrejection',e=>__bootFail(e&&e.reason?String(e.reason.message||e.reason).slice(0,160):''));
+if(typeof supabase==='undefined'||!supabase){__bootFail('Supabase library failed to load (CDN/network)');throw new Error('supabase global missing');}
+
 // ===== CONFIG =====
 const SUPABASE_URL = 'https://vzeowbriddhvhpishmhn.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_c0zOl9f2zhkGAOb2Vs13dg_1jlnYxzt';
@@ -1640,7 +1655,7 @@ function drawAddModal(){
   $('#add-save',m).onclick=createLead;
 }
 
-init();
+init().catch(e=>__bootFail(e&&e.message?String(e.message).slice(0,160):'init failed'));
 </script>
 </body>
 </html>
