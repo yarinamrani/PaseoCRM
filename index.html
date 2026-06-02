@@ -390,6 +390,9 @@
     .mob-card-row{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt-2)}
     .mob-card-row .ico{font-size:13px;opacity:.7;width:18px;text-align:center;flex-shrink:0}
     .mob-card-row .days{margin-right:auto}
+    .mob-card-note{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--gold-2);background:var(--gold-soft);border-radius:7px;padding:7px 9px;margin-top:2px}
+    .mob-card-note .ico{font-size:12px;opacity:.8;flex-shrink:0}
+    .mob-card-note-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
     .mob-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;padding-top:8px;border-top:1px solid var(--line-soft)}
     .mob-card-meta{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
     .mob-card-meta .chip,.mob-card-meta .rel-pill{font-size:10px}
@@ -1142,6 +1145,7 @@ function mobCardHTML(l){
     ${dateStr?`<div class="mob-card-row"><span class="ico">📅</span><span>${dateStr}${dow?' · '+dow:''}</span>${daysHTML}</div>`:''}
     ${l.guests_raw&&l.guests_raw!=='0'?`<div class="mob-card-row"><span class="ico">👥</span><span>${esc(l.guests_raw)} אורחים</span></div>`:''}
     ${l.hostess?`<div class="mob-card-row"><span class="ico">📞</span><span>מארחת: ${esc(l.hostess)}</span></div>`:''}
+    ${l.notes&&l.notes.trim()?`<div class="mob-card-note"><span class="ico">💬</span><span class="mob-card-note-txt">${esc(l.notes.trim())}</span></div>`:''}
     <div class="mob-card-foot">
       <div class="mob-card-meta">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
