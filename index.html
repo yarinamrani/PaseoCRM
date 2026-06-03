@@ -1000,6 +1000,7 @@ function cardHTML(l){
     <div class="footer">
       <div class="badges">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.hostess?`<span class="chip hostess">📞 ${esc(l.hostess)}</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
       </div>
@@ -1035,7 +1036,7 @@ function drawTable(){
       const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
       const wa=waLink(l.phone);
       return `<tr class="${cls}" data-id="${l.id}">
-        <td><b>${esc(l.full_name)||'—'}</b></td>
+        <td><b>${esc(l.full_name)||'—'}</b>${l.duplicate_of?` <span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a;font-size:10px">🔁 כפול</span>`:''}</td>
         <td>${l.phone?`<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${wa?` · <a href="${wa}" target="_blank">💬</a>`:''}`:'—'}</td>
         <td>${esc(l.event_type)||'—'}</td>
         <td>${l.event_date?fmtDate(l.event_date)+' '+daysLabel(l.event_date):esc(l.event_date_raw||'')||'—'}</td>
@@ -1149,6 +1150,7 @@ function mobCardHTML(l){
     <div class="mob-card-foot">
       <div class="mob-card-meta">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
         ${l.relevance&&l.relevance!=='unknown'?`<span class="rel-pill ${rel.cls}">${rel.l}</span>`:''}
       </div>
