@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'self'; form-action 'self'" />
 <title>PASEO · ניהול לידים לאירועים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Frank+Ruhl+Libre:wght@500;700;900&display=swap" rel="stylesheet">
@@ -500,7 +501,7 @@ const RELEVANCE = [
   {k:'unknown',    l:'לא ברור',     cls:'rel-unk'},
   {k:'irrelevant', l:'לא רלוונטי',  cls:'rel-no'},
 ];
-const ASSIGNEES = ['ירין','אריאל','יורה','מישל','גיל'];
+const ASSIGNEES = ['ירין','אריאל','יורה'];
 const SRC_LABEL = {callevent:'Call Event', paseo_form:'טופס אתר', phone:'טלפוני'};
 const ACT_KINDS = [
   {k:'call',          l:'שיחה',     ico:'📞'},
