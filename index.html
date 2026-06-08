@@ -1308,6 +1308,7 @@ function drawCalendar(){
 function openDetail(id){
   openLeadId=id;
   pendingEdits={};
+  actDraft={kind:'call',body:'',actor:actDraft.actor||'ירין'}; // טיוטת פעילות נקייה לכל ליד (אחרת הטקסט "זולג" לליד הבא)
   $('#scrim').classList.add('open');
   const existing=document.querySelector('.detail');
   if(existing)existing.remove();
