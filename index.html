@@ -972,6 +972,7 @@ function closeQuote(){const b=document.getElementById('quote-builder');if(b){b.c
 
 function renderQuote(){
   const b=document.getElementById('quote-builder');if(!b||!Q)return;
+  const prevBody=b.querySelector('#qb-body');const prevScroll=prevBody?prevBody.scrollTop:0; // לשמר מיקום גלילה (בחירת מנה לא תקפיץ לראש)
   const t=quoteTotals();
   const steps=['פרטים','תפריט','מחיר','סקירה'];
   b.innerHTML=`
@@ -987,6 +988,7 @@ function renderQuote(){
       :`<button class="qb-send" id="qb-send">💬 שלח בוואטסאפ</button>
         <button class="qb-copy" id="qb-copy">העתק קישור</button>`}
     </div>`;
+  const nb=b.querySelector('#qb-body');if(nb&&prevScroll)nb.scrollTop=prevScroll; // שחזור מיקום הגלילה
   setTimeout(()=>b.classList.add('open'),10);
   wireQuote();
 }
