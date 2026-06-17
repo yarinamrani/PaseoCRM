@@ -447,6 +447,8 @@
   .quote-badge.accepted{background:rgba(46,204,113,.18);color:#5fd896}
   .quote-link{background:transparent;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
   .chip.accepted-q{background:rgba(46,204,113,.18);color:#5fd896;font-weight:700}
+  .chip.cold{background:rgba(74,144,217,.16);color:#8fc1f0;font-weight:700}
+  .stat .n.cold-n{color:#8fc1f0}
 
   /* ===== Needs-attention view ===== */
   .att-tab{position:relative}
@@ -869,6 +871,15 @@ async function loadAcceptedQuotes(){
   ACCEPTED_LEADS=new Set((data||[]).map(q=>q.lead_id).filter(Boolean));
 }
 const acceptedChip=l=>ACCEPTED_LEADS.has(l.id)?`<span class="chip accepted-q">✓ הצעה אושרה</span>`:'';
+// ליד "קר" — לא נגעו בו מעל 10 ימים. נגזר אוטומטית, יורד מהספירות הפעילות, חוזר ברגע שנוגעים בו.
+const COLD_DAYS=10;
+const leadStale=l=>Math.max(0,Math.floor((Date.now()-new Date(l.updated_at).getTime())/864e5));
+function isCold(l){
+  if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return false;
+  if(ACCEPTED_LEADS.has(l.id))return false;
+  return leadStale(l)>COLD_DAYS;
+}
+const coldChip=l=>isCold(l)?`<span class="chip cold">❄️ קר</span>`:'';
 const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
@@ -1458,13 +1469,15 @@ function drawStats(){
     if(l.relevance==='irrelevant')return false;
     return true;
   });
-  const active=base.filter(l=>!['won','lost'].includes(l.status)).length;
+  const active=base.filter(l=>!['won','lost'].includes(l.status)&&!isCold(l)).length;
+  const cold=base.filter(isCold).length;
   const week=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=7}).length;
   const month=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=30}).length;
   const won=base.filter(l=>l.status==='won').length;
   const conv=base.length?Math.round(won/base.length*100):0;
   $('#stats').innerHTML=`
     <div class="stat"><div class="n">${active}</div><div class="l">לידים פעילים</div></div>
+    <div class="stat"><div class="n cold-n">${cold}</div><div class="l">קרים ❄️</div></div>
     <div class="stat"><div class="n">${week}</div><div class="l">השבוע</div></div>
     <div class="stat"><div class="n">${month}</div><div class="l">החודש</div></div>
     <div class="stat"><div class="n">${won}</div><div class="l">נסגרו</div></div>
@@ -1493,6 +1506,7 @@ function draw(){
 function attentionInfo(l){
   if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return null;
   if(ACCEPTED_LEADS.has(l.id))return null;
+  if(isCold(l))return null; // קר — כבר ירד מהמעקב הפעיל
   if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return null; // נדחה (snooze)
   const since=Math.max(0,Math.floor((Date.now()-new Date(l.updated_at).getTime())/864e5));
   const dU=l.event_date?daysUntil(l.event_date):null;
@@ -1593,7 +1607,7 @@ function cardHTML(l){
     <div class="footer">
       <div class="badges">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
-        ${acceptedChip(l)}
+        ${acceptedChip(l)}${coldChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.hostess?`<span class="chip hostess">📞 ${esc(l.hostess)}</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
@@ -1744,7 +1758,7 @@ function mobCardHTML(l){
     <div class="mob-card-foot">
       <div class="mob-card-meta">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
-        ${acceptedChip(l)}
+        ${acceptedChip(l)}${coldChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
         ${l.relevance&&l.relevance!=='unknown'?`<span class="rel-pill ${rel.cls}">${rel.l}</span>`:''}
