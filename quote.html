@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'self'; form-action 'self'" />
+<title>הצעת מחיר · PASEO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Frank+Ruhl+Libre:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#0c0e12;--bg-soft:#11141a;--panel:#161a21;--panel-2:#1d222b;--panel-3:#252a35;
+    --line:#272d38;--txt:#e8eaed;--txt-2:#c5c9d0;--muted:#8b93a1;--muted-2:#6c7380;
+    --gold:#c9a227;--gold-2:#d9b441;--gold-soft:rgba(201,162,39,.12);--ok:#2ecc71;
+    --radius:14px;--shadow:0 8px 32px rgba(0,0,0,.45)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;
+    background-image:radial-gradient(circle at 0% 0%,rgba(201,162,39,.06),transparent 38%),
+                     radial-gradient(circle at 100% 100%,rgba(74,144,217,.04),transparent 42%);
+    padding-bottom:96px}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px}
+  .serif{font-family:'Frank Ruhl Libre',serif}
+  .hero{text-align:center;padding:36px 16px 24px}
+  .logo{color:var(--gold);height:84px;margin:0 auto 6px;display:block}
+  .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-top:14px;box-shadow:var(--shadow)}
+  .ev-h{font-family:'Frank Ruhl Libre',serif;font-size:24px;color:var(--gold-2);font-weight:700}
+  .ev-sub{font-size:14px;color:var(--txt-2);margin-top:5px}
+  .ev-pkg{display:inline-block;margin-top:10px;font-size:12px;font-weight:700;color:var(--gold);background:var(--gold-soft);border:1px solid var(--gold);border-radius:999px;padding:5px 13px}
+  .sec-t{font-family:'Frank Ruhl Libre',serif;font-size:18px;color:var(--gold);margin:22px 2px 10px;font-weight:700}
+  .course b{display:block;font-size:14px;color:var(--gold-2);font-weight:700;margin:12px 0 5px}
+  .course .d{font-size:14px;color:var(--txt);padding:3px 0;border-bottom:1px solid var(--line)}
+  .course .d small{color:var(--muted);font-weight:400}
+  .brk div{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:7px 0;color:var(--txt-2);border-bottom:1px dashed var(--line)}
+  .brk .disc b{color:var(--ok)}
+  .brk .tot{border-bottom:none;border-top:2px solid var(--line);margin-top:4px;padding-top:13px;font-size:20px;font-weight:800;color:var(--txt)}
+  .brk .tot b{color:var(--gold-2)}
+  .vat{font-size:11px;color:var(--muted-2);text-align:center;margin-top:10px}
+  .valid{text-align:center;font-size:13px;color:var(--muted);margin:18px 0}
+  .accepted-banner{background:rgba(46,204,113,.12);border:1px solid var(--ok);color:#7fe0a8;border-radius:12px;padding:14px;text-align:center;font-weight:700;margin-top:14px}
+  .cta-bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg-soft);border-top:1px solid var(--line);
+    padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));z-index:5}
+  .cta-inner{max-width:560px;margin:0 auto;display:flex;gap:10px}
+  .cta-main{flex:1;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#1a1206;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+  .cta-ghost{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:15px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center}
+  .center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--muted)}
+  /* accept sheet */
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10;display:none;align-items:flex-end}
+  .sheet-bg.open{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:22px 18px;width:100%;max-width:560px;margin:0 auto}
+  .sheet h3{font-family:'Frank Ruhl Libre',serif;font-size:20px;color:var(--gold-2);margin-bottom:6px}
+  .sheet p{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .sheet input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:14px;color:var(--txt);font-size:15px;font-family:inherit;outline:none;margin-bottom:12px}
+  .sheet input:focus{border-color:var(--gold)}
+  span[dir=ltr]{unicode-bidi:isolate}
+</style>
+</head>
+<body>
+<div id="app"><div class="center">טוען…</div></div>
+
+<script type="module">
+const SUPABASE_URL='https://vzeowbriddhvhpishmhn.supabase.co';
+const SUPABASE_ANON='sb_publishable_c0zOl9f2zhkGAOb2Vs13dg_1jlnYxzt';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+const VENUE_WA='972500000000'; // מספר וואטסאפ של פסאו לשאלות (לעדכון)
+
+const TRACKS={dairy:'חלבי',meat:'בשרי'};
+const PKG={classic:'CLASSIC',premium:'PREMIUM',deluxe:'DELUXE'};
+const COURSES=[['starter','מנות פתיחה'],['rawbar','Raw Bar'],['main','עיקריות'],['dessert','קינוחים']];
+const UP_DESC={wine:'יין ובירה חופשי',open:'בר אלכוהול חופשי',cocktail:'תוספת בר קוקטיילים',sushi:'עמדת סושי'};
+const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=d=>d?d.split('-').reverse().join('.'):'';
+const LOGO=`<svg class="logo" viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg" aria-label="PASEO">
+  <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".95">
+    <line x1="140" y1="8" x2="140" y2="30"/><line x1="118" y1="12" x2="125" y2="33"/><line x1="162" y1="12" x2="155" y2="33"/>
+    <line x1="98" y1="22" x2="112" y2="38"/><line x1="182" y1="22" x2="168" y2="38"/><line x1="82" y1="36" x2="102" y2="44"/><line x1="198" y1="36" x2="178" y2="44"/></g>
+  <path d="M 110 55 A 30 30 0 0 1 170 55" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <line x1="40" y1="55" x2="108" y2="55" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="172" y1="55" x2="240" y2="55" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <text x="140" y="92" text-anchor="middle" fill="currentColor" font-family="'Frank Ruhl Libre',serif" font-size="34" font-weight="500" letter-spacing="6">PASEO</text>
+  <text x="140" y="115" text-anchor="middle" fill="currentColor" font-family="'Heebo',sans-serif" font-size="9" letter-spacing="4" opacity=".75">ROOFTOP LOUNGE &#8226; DINING</text>
+</svg>`;
+
+const token=new URLSearchParams(location.search).get('t');
+const app=document.getElementById('app');
+
+function fail(msg){app.innerHTML=`<div class="hero">${LOGO}</div><div class="center"><div style="font-size:40px">🌅</div><div>${esc(msg)}</div></div>`}
+
+async function load(){
+  if(!token){fail('קישור לא תקין');return}
+  const {data,error}=await sb.rpc('crm_quote_get',{p_token:token});
+  if(error||!data){fail('ההצעה לא נמצאה או שפג תוקפה');return}
+  render(data);
+}
+
+function render(q){
+  const g=Number(q.guests)||0;
+  const base=(Number(q.per_person)||0)*g;
+  const ups=(q.upgrades||[]).map(u=>({l:u.l||UP_DESC[u.k]||u.k,amt:(Number(u.pp)||0)*g}));
+  const customs=(q.custom_lines||[]).filter(c=>c.name).map(c=>({l:c.name,amt:c.per_guest?(Number(c.amount)||0)*g:(Number(c.amount)||0)}));
+  const disc=Number(q.discount)||0;
+  const accepted=q.status==='accepted';
+
+  const menuHtml=COURSES.map(([k,l])=>{
+    const items=(q.dishes||[]).filter(d=>d.course===k);
+    return items.length?`<div class="course"><b>${l}</b>${items.map(d=>`<div class="d">${esc(d.name)}</div>`).join('')}</div>`:'';
+  }).join('');
+
+  app.innerHTML=`
+    <div class="hero">${LOGO}<div class="tag">אירועים על הגג</div></div>
+    <div class="wrap">
+      <div class="card">
+        <div class="ev-h">${esc(q.client_name)||'הצעת מחיר'}</div>
+        <div class="ev-sub">${[esc(q.event_type),(g?g+' סועדים':''),(q.event_date?fmtDate(q.event_date):'')].filter(Boolean).join(' · ')}</div>
+        <span class="ev-pkg">${TRACKS[q.track]||''} · ${PKG[q.package]||''} · ${money(q.per_person)} לאדם</span>
+      </div>
+
+      ${menuHtml?`<div class="card"><div class="sec-t">התפריט שלכם</div>${menuHtml}</div>`:''}
+
+      <div class="card">
+        <div class="sec-t">פירוט מחיר</div>
+        <div class="brk">
+          <div><span>${money(q.per_person)} × ${g} סועדים</span><b>${money(base)}</b></div>
+          ${ups.map(u=>`<div><span>${esc(u.l)}</span><b>${money(u.amt)}</b></div>`).join('')}
+          ${customs.map(c=>`<div><span>${esc(c.l)}</span><b>${money(c.amt)}</b></div>`).join('')}
+          ${disc?`<div class="disc"><span>הנחה</span><b>−${money(disc)}</b></div>`:''}
+          <div class="tot"><span>סה״כ משוער</span><b>${money(q.total)}</b></div>
+        </div>
+        <div class="vat">המחירים אינם כוללים מע״מ · ייתכנו התאמות בהתאם לפרטי האירוע</div>
+      </div>
+
+      <div class="valid">ההצעה בתוקף עד ${fmtDate(q.validity_date)||'—'}</div>
+      ${accepted?`<div class="accepted-banner">✓ ההצעה אושרה${q.accepted_name?` ע״י ${esc(q.accepted_name)}`:''} — ניצור איתכם קשר בהקדם!</div>`:''}
+    </div>
+
+    ${accepted?'':`<div class="cta-bar"><div class="cta-inner">
+      <button class="cta-main" id="accept-btn">אישור הצעה ✓</button>
+      <a class="cta-ghost" href="https://wa.me/${VENUE_WA}?text=${encodeURIComponent('היי, יש לי שאלה על הצעת המחיר')}" target="_blank">שאלות?</a>
+    </div></div>
+
+    <div class="sheet-bg" id="sheet-bg"><div class="sheet">
+      <h3>אישור הצעת מחיר</h3>
+      <p>נשמח לאשר את הפרטים — מלאו את שמכם המלא ואנחנו נמשיך מכאן 🌅</p>
+      <input id="accept-name" placeholder="שם מלא" autocomplete="name">
+      <button class="cta-main" style="width:100%" id="accept-confirm">אישור ✓</button>
+    </div></div>`}`;
+
+  if(!accepted){
+    const bg=document.getElementById('sheet-bg');
+    document.getElementById('accept-btn').onclick=()=>{bg.classList.add('open');setTimeout(()=>document.getElementById('accept-name').focus(),100)};
+    bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open')};
+    document.getElementById('accept-confirm').onclick=async()=>{
+      const name=document.getElementById('accept-name').value.trim();
+      const btn=document.getElementById('accept-confirm');btn.textContent='שולח…';btn.disabled=true;
+      const {data,error}=await sb.rpc('crm_quote_accept',{p_token:token,p_name:name});
+      if(error||!data){btn.textContent='אישור ✓';btn.disabled=false;alert('אירעה שגיאה, נסו שוב');return}
+      q.status='accepted';q.accepted_name=name;render(q);
+    };
+  }
+}
+load();
+</script>
+</body>
+</html>

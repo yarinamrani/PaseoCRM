@@ -431,6 +431,100 @@
     font-size:28px;font-weight:300;line-height:1;
     box-shadow:0 6px 20px rgba(201,162,39,.45);transition:transform .15s}
   .fab:active{transform:scale(.92)}
+
+  /* ===== Quote builder ===== */
+  .quote-cta{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#1a1206;border:none;
+    border-radius:11px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;
+    box-shadow:0 4px 16px rgba(201,162,39,.28);transition:transform .12s}
+  .quote-cta:active{transform:scale(.98)}
+  .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
+  .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
+  .quote-row:active{background:var(--panel-3)}
+  .quote-row-main{flex:1;font-size:13px;font-weight:600}
+  .quote-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--panel-3);color:var(--txt-2)}
+  .quote-badge.sent{background:rgba(74,144,217,.18);color:#7fb4e8}
+  .quote-badge.accepted{background:rgba(46,204,113,.18);color:#5fd896}
+  .quote-link{background:transparent;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
+
+  .qb{position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;
+    opacity:0;transform:translateY(14px);transition:opacity .22s,transform .22s;overscroll-behavior:contain}
+  .qb.open{opacity:1;transform:none}
+  .qb-head{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
+  .qb-x{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;font-size:16px;cursor:pointer;flex-shrink:0}
+  .qb-who{font-size:12px;color:var(--muted);font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+  .qb-steps{flex:1;display:flex;gap:4px;overflow:hidden}
+  .qb-steps span{flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--muted-2);padding:7px 2px;border-radius:8px;background:var(--panel);white-space:nowrap;cursor:default}
+  .qb-steps span.done{color:var(--gold-dim);cursor:pointer}
+  .qb-steps span.on{color:#1a1206;background:var(--gold)}
+  .qb-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 20px}
+  .qb-sec{display:flex;flex-direction:column}
+  .qb-l{font-size:12px;color:var(--muted);font-weight:700;margin:16px 2px 7px}
+  .qb-l:first-child{margin-top:0}
+  .qb-in{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px;color:var(--txt);font-size:15px;font-family:inherit;outline:none}
+  .qb-in:focus{border-color:var(--gold-dim);background:var(--panel-2)}
+  .qb-stepper{display:flex;align-items:center;gap:14px;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+  .qb-stepper button{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--gold);font-size:26px;font-weight:300;cursor:pointer;line-height:1}
+  .qb-stepper button:active{background:var(--gold);color:#1a1206}
+  .qb-stepper input{width:90px;text-align:center;background:transparent;border:none;color:var(--txt);font-size:30px;font-weight:700;outline:none;font-family:'Heebo'}
+  .qb-seg{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px}
+  .qb-seg button{flex:1;background:transparent;border:none;color:var(--muted);padding:11px 6px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qb-seg button.on{background:var(--gold);color:#1a1206}
+  .qb-pkgs{display:flex;gap:7px}
+  .qb-pkgs button{flex:1;display:flex;flex-direction:column;gap:3px;align-items:center;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:13px 5px;cursor:pointer;color:var(--txt)}
+  .qb-pkgs button b{font-size:13px;letter-spacing:.5px}
+  .qb-pkgs button span{font-size:11px;color:var(--muted)}
+  .qb-pkgs button.on{border-color:var(--gold);background:var(--gold-soft)}
+  .qb-pkgs button.on span{color:var(--gold-2)}
+  .qb-course{margin-top:18px}
+  .qb-course-h{font-family:'Frank Ruhl Libre',serif;font-size:16px;font-weight:700;color:var(--gold-2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .qb-pick{font-family:'Heebo';font-size:11px;font-weight:700;color:var(--muted-2);background:var(--panel-2);padding:3px 9px;border-radius:999px}
+  .qb-pick.ok{color:#5fd896;background:rgba(46,204,113,.14)}
+  .qb-dish{width:100%;display:flex;align-items:center;gap:10px;text-align:right;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:7px;cursor:pointer;color:var(--txt)}
+  .qb-dish .qb-dish-n{font-size:14px;font-weight:700}
+  .qb-dish .qb-dish-d{flex:1;font-size:11px;color:var(--muted);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qb-dish .qb-dish-x{width:30px;height:30px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--panel-3);color:var(--muted);font-size:17px}
+  .qb-dish.on{border-color:var(--gold);background:var(--gold-soft)}
+  .qb-dish.on .qb-dish-x{background:var(--gold);color:#1a1206}
+  .qb-line{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:11px;text-align:center;font-size:14px;color:var(--txt-2);margin-top:9px}
+  .qb-up{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:7px;cursor:pointer;color:var(--txt);font-size:13px;font-weight:600}
+  .qb-up-p{font-size:12px;color:var(--muted)}
+  .qb-up.on{border-color:var(--gold);background:var(--gold-soft)}
+  .qb-up.on .qb-up-p{color:var(--gold-2)}
+  .qb-custom{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+  .qb-custom .qb-cn{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--txt);font-size:13px;font-family:inherit;outline:none}
+  .qb-custom .qb-ca{width:74px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;text-align:center}
+  .qb-cpg{flex-shrink:0;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:9px 8px;font-size:11px;font-weight:700;cursor:pointer}
+  .qb-cpg.on{background:var(--gold);color:#1a1206}
+  .qb-crm{flex-shrink:0;background:transparent;border:none;color:var(--danger);font-size:14px;cursor:pointer;padding:6px}
+  .qb-addline{width:100%;background:var(--panel-2);border:1px dashed var(--line);color:var(--gold-2);border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qb-foot{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg-soft)}
+  .qb-total{flex:1;display:flex;flex-direction:column;line-height:1.25}
+  .qb-total .lbl{font-size:11px;color:var(--muted)}
+  .qb-total b{font-size:23px;color:var(--gold-2);font-weight:800;font-variant-numeric:tabular-nums}
+  .qb-total .sub{font-size:11px;color:var(--muted-2)}
+  .qb-next,.qb-send{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#1a1206;border:none;border-radius:12px;padding:15px 22px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+  .qb-send{flex:1}
+  .qb-copy{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:15px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qb-next:active,.qb-send:active{transform:scale(.98)}
+  /* review */
+  .qb-review{max-width:520px;margin:0 auto}
+  .qb-rev-h{font-family:'Frank Ruhl Libre',serif;font-size:22px;font-weight:700;color:var(--gold-2)}
+  .qb-rev-sub{font-size:13px;color:var(--muted);margin:4px 0 2px}
+  .qb-rev-pkg{font-size:12px;color:var(--txt-2);margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .qb-rev-course{margin-bottom:12px}
+  .qb-rev-course b{font-family:'Frank Ruhl Libre',serif;font-size:14px;color:var(--gold);display:block;margin-bottom:4px}
+  .qb-rev-course div{font-size:13px;color:var(--txt-2);padding:1px 0}
+  .qb-rev-break{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .qb-rev-break>div{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;color:var(--txt-2)}
+  .qb-rev-break .disc b{color:var(--ok)}
+  .qb-rev-break .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:11px;font-size:17px;color:var(--txt);font-weight:800}
+  .qb-rev-break .tot b{color:var(--gold-2)}
+  .qb-rev-valid{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}
+  @media(min-width:760px){
+    .qb-head,.qb-foot{max-width:640px;margin-left:auto;margin-right:auto;width:100%}
+    .qb-body{max-width:640px;margin:0 auto;width:100%}
+  }
 </style>
 </head>
 <body>
@@ -555,6 +649,50 @@ const WA_OPENING_MSG='היי, מדברים מהפסאו 🌅 ראיתי שהשא
 // לינקים לתפריטי האירועים (מתארחים ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-dairy.pdf';
 const MENU_MEAT_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-meat.pdf';
+
+// ===== Quote builder — menu catalog (seeded from the events PDFs) =====
+const QUOTE_PAGE_URL='https://yarinamrani.github.io/PaseoCRM/quote.html';
+const TRACKS=[{k:'dairy',l:'חלבי',ico:'🧀'},{k:'meat',l:'בשרי',ico:'🥩'}];
+const COURSES=[
+  {k:'starter',l:'מנות פתיחה'},
+  {k:'rawbar', l:'Raw Bar'},
+  {k:'main',   l:'עיקריות'},
+  {k:'dessert',l:'קינוחים'},
+];
+// pp = מחיר לאדם; pick = כמה בוחרים מכל קורס
+const PACKAGES={
+  dairy:[
+    {k:'classic',l:'CLASSIC',pp:189,pick:{starter:4,rawbar:0,main:2,dessert:1}},
+    {k:'premium',l:'PREMIUM',pp:249,pick:{starter:5,rawbar:1,main:3,dessert:2}},
+    {k:'deluxe', l:'DELUXE', pp:319,pick:{starter:6,rawbar:2,main:4,dessert:2}},
+  ],
+  meat:[
+    {k:'classic',l:'CLASSIC',pp:219,pick:{starter:4,rawbar:0,main:2,dessert:1}},
+    {k:'premium',l:'PREMIUM',pp:249,pick:{starter:5,rawbar:1,main:3,dessert:2}},
+    {k:'deluxe', l:'DELUXE', pp:319,pick:{starter:6,rawbar:2,main:4,dessert:2}},
+  ],
+};
+const UPGRADES=[
+  {k:'wine',    l:'Wine & Beer',          pp:45},
+  {k:'open',    l:'Open Bar · אלכוהול חופשי',pp:79},
+  {k:'cocktail',l:'תוספת Cocktail Bar',    pp:35},
+  {k:'sushi',   l:'עמדת סושי',             pp:45},
+];
+// [שם, תיאור] — נזרע מהתפריטים הרשמיים
+const DISHES={
+  dairy:{
+    starter:[['חציל בלאדי','טחינה ביתית, סלסה עגבניות וטוסטונים'],['פלאפל כרובית','כרובית וכמהין במילוי גבינות, שמן ירוק וסלסה'],['סלט שרי וקרעי מוצרלה','בצל סגול, רוקט, שמן זית ובלסמי'],['צלעות תירס','מטוגנות, איולי פפריקה, דבש ופרמז׳ן'],['סלט קיסר','לבבות חסה, קרוטונים, ביצה רכה ופרמזן'],['קרפצ׳יו סלק וגבינת עזים','בצל ירוק, סילאן, שמן זית ואגוזים קלויים'],['סלט אנדיב פרימוורה','תפוח, גבינת עזים, פקאן מסוכר וויניגרט הדרים'],['צ׳יפס אמריקאי','פריך וזהוב'],['לחם הבית','מטבלים, שמן זית, בלסמי ושום קונפי']],
+    rawbar:[['סשימי סלמון','טוגראשי, אבוקדו, צ׳ילי חריף ואיולי וואסבי'],['טטאקי טונה','טוגראשי, אבוקדו, צ׳ילי, יוזו ואיולי וואסבי'],['פאני פורי','סביצ׳ה סלמון, מלפפון, כוסברה וקרם פרש יוזו'],['סביצ׳ה ים תיכוני','בצל סגול, צ׳ילי, לימון וכוסברה'],['טוסטדה טונה אדומה','טונה טרייה, אבוקדו, צ׳ילי ואיולי יוזו'],['סביצ׳ה דג לבן','דניס, בצל סגול, צ׳ילי, לימון ושמן צ׳ילי']],
+    main:[['פיש & צ׳יפס','רצועות דג לבן בציפוי פנקו וצ׳יפס'],['פילה לברק','קרם כרובית, שום קונפי, בצל רך ופרמזן'],['לינגוויני חמאת עגבניות','ברוטב חמאת עגבניות'],['טורטייה פטריות','מיקס פטריות ושמן כמהין'],['פסטה ים תיכונית','שרי, זיתי קלמטה, צ׳ילי, שום קונפי ולימון'],['פיצה נפוליטנה','בצק משובח, רוטב עגבניות ומוצרלה'],['פיצה ביאנקה','רוטב בשמל, פטריות פורטובלו ושמן כמהין'],['טורטליני דבש וערמונים','שמנת קרמי, תרד, דלעת צלויה ופרמז׳ן']],
+    dessert:[['טירמיסו','בישקוטי, קרם מסקרפונה וקקאו'],['פאדג׳ שוקולד','עוגת שוקולד חמה, קראמבל וגלידת וניל'],['קרם ברולה','תחתית קראמבל וקולי פסיפלורה'],['קינדר קוקי','עוגיית שוקו צ׳יפס, רוטב פיסטוק וגלידה'],['קינוחי ביס פרווה','מבחר קינוחי ביס'],['פרלינה שוקולד (טבעוני)','קרם שוקולד מריר, גנאש מוקצף ופירות יער']],
+  },
+  meat:{
+    starter:[['חציל בלאדי','טחינה ביתית, סלסה עגבניות וטוסטונים'],['קרפצ׳יו פילה בקר','בלסמי מצומצם, שמן זית, ארוגולה וצלפים'],['צלעות תירס','מטוגנות, איולי פפריקה, דבש (ללא פרמזן באירוע בשרי)'],['סלט קיסר','לבבות חסה, קרוטונים, ביצה רכה (ללא גבינות באירוע בשרי)'],['סלט שרי וקרעי מוצרלה','בצל סגול, רוקט, שמן זית ובלסמי (ללא גבינות באירוע בשרי)'],['קרפצ׳יו סלק','בצל ירוק, סילאן, שמן זית ואגוזים קלויים'],['סלט אנדיב פרימוורה','תפוח, פקאן מסוכר וויניגרט הדרים (ללא גבינות באירוע בשרי)'],['צ׳יפס אמריקאי','פריך וזהוב'],['לחם הבית','מטבלים, שמן זית, בלסמי ושום קונפי']],
+    rawbar:[['סשימי סלמון','טוגראשי, אבוקדו, צ׳ילי חריף ואיולי וואסבי'],['טטאקי טונה','טוגראשי, אבוקדו, צ׳ילי, יוזו ואיולי וואסבי'],['פאני פורי','סביצ׳ה סלמון, מלפפון, כוסברה וקרם פרש יוזו'],['סביצ׳ה ים תיכוני','בצל סגול, צ׳ילי, לימון וכוסברה'],['טוסטדה טונה אדומה','טונה טרייה, אבוקדו, צ׳ילי ואיולי יוזו'],['סביצ׳ה דג לבן','דניס, בצל סגול, צ׳ילי, לימון ושמן צ׳ילי']],
+    main:[['סטייק אנטריקוט בפריסה','מניפת אנטריקוט וירקות שורש בתנור'],['המבורגר פסאו','ריבת בצל, חסה, איולי פפריקה ודבש'],['סטייק פרגית','מתובל בתיבול הבית, ירקות שורש בתנור'],['מיני המבורגר','ריבת בצל, איולי פפריקה ודבש'],['פילה לברק','קרם כרובית, שום קונפי, בצל רך ופרמזן'],['פיש & צ׳יפס','רצועות דג לבן בציפוי פנקו וצ׳יפס'],['פסטה ים תיכונית','שרי, זיתי קלמטה, צ׳ילי, שום קונפי ולימון']],
+    dessert:[['פאדג׳ שוקולד','עוגת שוקולד חמה, קראמבל וגלידת וניל'],['קרם ברולה','תחתית קראמבל וקולי פסיפלורה'],['קינוחי ביס פרווה','מבחר קינוחי ביס'],['פרלינה שוקולד (טבעוני)','קרם שוקולד מריר, גנאש מוקצף ופירות יער']],
+  },
+};
 function menuMsg(kind,name){
   const greeting=name?`היי ${name}, `:'היי, ';
   const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
@@ -643,6 +781,223 @@ async function addActivity(leadId,kind,body,actor){
   ACTS[leadId]=[data,...(ACTS[leadId]||[])];
   actDraft={kind:'call',body:'',actor};
   drawDetail();showToast('נוסף');
+}
+
+// ===== Quote builder =====
+let Q=null; // current quote draft
+const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
+const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
+const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
+
+function quoteTotals(){
+  const g=Number(Q.guests)||0;
+  const base=(Number(Q.per_person)||0)*g;
+  const ups=(Q.upgrades||[]).reduce((s,u)=>s+(Number(u.pp)||0)*g,0);
+  const customs=(Q.custom_lines||[]).reduce((s,c)=>s+(c.per_guest?(Number(c.amount)||0)*g:(Number(c.amount)||0)),0);
+  const disc=Number(Q.discount)||0;
+  return {g,base,ups,customs,disc,total:Math.max(0,base+ups+customs-disc)};
+}
+function quoteValidityDate(){const d=new Date();d.setDate(d.getDate()+(Number(Q.validity_days)||14));return d.toISOString().slice(0,10)}
+function quoteEventLine(){return [Q.event_type,(Q.guests?Q.guests+' סועדים':''),(Q.event_date?fmtDate(Q.event_date):'')].filter(Boolean).join(' · ')}
+const isDishSel=(course,name)=>(Q.dishes||[]).some(d=>d.course===course&&d.name===name);
+function toggleDish(course,name){
+  if(isDishSel(course,name))Q.dishes=Q.dishes.filter(d=>!(d.course===course&&d.name===name));
+  else Q.dishes=[...Q.dishes,{course,name}];
+  renderQuote();
+}
+
+function openQuote(lead,existing){
+  const guess=lead.guests_max||lead.guests_min||(lead.guests_raw?parseInt(lead.guests_raw):0)||50;
+  if(existing){
+    Q=Object.assign({},existing,{_step:1,_phone:lead.phone||'',
+      dishes:existing.dishes||[],upgrades:existing.upgrades||[],custom_lines:existing.custom_lines||[],
+      validity_days:existing.validity_date?Math.max(1,Math.round((new Date(existing.validity_date)-new Date())/864e5)):14});
+  } else {
+    Q={lead_id:lead.id,id:null,token:null,status:'draft',_step:1,_phone:lead.phone||'',
+      client_name:lead.full_name||'',event_type:lead.event_type||'',event_date:lead.event_date||'',
+      guests:guess,track:'meat',package:'premium',per_person:pkgOf('meat','premium').pp,
+      dishes:[],upgrades:[],custom_lines:[],discount:0,validity_days:14,notes:''};
+  }
+  if(!document.getElementById('quote-builder')){
+    const b=document.createElement('div');b.id='quote-builder';b.className='qb';document.body.appendChild(b);
+  }
+  renderQuote();
+}
+function closeQuote(){const b=document.getElementById('quote-builder');if(b){b.classList.remove('open');setTimeout(()=>b.remove(),250)}Q=null}
+
+function renderQuote(){
+  const b=document.getElementById('quote-builder');if(!b||!Q)return;
+  const t=quoteTotals();
+  const steps=['פרטים','תפריט','מחיר','סקירה'];
+  b.innerHTML=`
+    <div class="qb-head">
+      <button class="qb-x" id="qb-x">✕</button>
+      <div class="qb-steps">${steps.map((s,i)=>`<span class="${i+1===Q._step?'on':''} ${i+1<Q._step?'done':''}" data-step="${i+1}">${i+1} ${s}</span>`).join('')}</div>
+      <div class="qb-who">${esc(Q.client_name)||'ליד'}</div>
+    </div>
+    <div class="qb-body" id="qb-body">${quoteStep()}</div>
+    <div class="qb-foot">
+      ${Q._step<4?`<div class="qb-total"><span class="lbl">סה״כ משוער</span><b>${money(t.total)}</b><span class="sub">${t.g} סועדים · ${money(Q.per_person)}/אדם</span></div>
+        <button class="qb-next" id="qb-next">${Q._step===3?'סקירה':'הבא'} ←</button>`
+      :`<button class="qb-send" id="qb-send">💬 שלח בוואטסאפ</button>
+        <button class="qb-copy" id="qb-copy">העתק קישור</button>`}
+    </div>`;
+  setTimeout(()=>b.classList.add('open'),10);
+  wireQuote();
+}
+
+function quoteStep(){
+  const t=quoteTotals();
+  if(Q._step===1){
+    return `<div class="qb-sec">
+      <label class="qb-l">כמות סועדים</label>
+      <div class="qb-stepper"><button data-g="-1">−</button><input id="q-guests" type="number" inputmode="numeric" value="${Q.guests||''}"><button data-g="1">+</button></div>
+      <label class="qb-l">סוג אירוע</label>
+      <input class="qb-in" id="q-etype" value="${esc(Q.event_type)}" placeholder="לדוגמה: יום הולדת 50">
+      <label class="qb-l">תאריך האירוע</label>
+      <input class="qb-in" id="q-edate" type="date" value="${Q.event_date||''}">
+    </div>`;
+  }
+  if(Q._step===2){
+    const pkg=pkgOf(Q.track,Q.package);
+    return `<div class="qb-sec">
+      <label class="qb-l">מסלול</label>
+      <div class="qb-seg" id="q-track">${TRACKS.map(tr=>`<button data-k="${tr.k}" class="${tr.k===Q.track?'on':''}">${tr.ico} ${tr.l}</button>`).join('')}</div>
+      <label class="qb-l">חבילה</label>
+      <div class="qb-pkgs" id="q-pkg">${PACKAGES[Q.track].map(p=>`<button data-k="${p.k}" class="${p.k===Q.package?'on':''}"><b>${p.l}</b><span>${money(p.pp)} / אדם</span></button>`).join('')}</div>
+      ${COURSES.filter(c=>pkg.pick[c.k]>0).map(c=>{
+        const list=DISHES[Q.track][c.k]||[];const sel=(Q.dishes||[]).filter(d=>d.course===c.k).length;const need=pkg.pick[c.k];
+        return `<div class="qb-course">
+          <div class="qb-course-h">${c.l} <span class="qb-pick ${sel===need?'ok':''}">נבחרו ${sel}/${need}</span></div>
+          ${list.map(([nm,ds])=>`<button class="qb-dish ${isDishSel(c.k,nm)?'on':''}" data-c="${c.k}" data-n="${esc(nm)}"><span class="qb-dish-n">${nm}</span><span class="qb-dish-d">${ds}</span><span class="qb-dish-x">${isDishSel(c.k,nm)?'✓':'+'}</span></button>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  if(Q._step===3){
+    return `<div class="qb-sec">
+      <label class="qb-l">מחיר לאדם (₪)</label>
+      <input class="qb-in" id="q-pp" type="number" inputmode="numeric" value="${Q.per_person||''}">
+      <div class="qb-line">${money(Q.per_person)} × ${t.g} סועדים = <b>${money(t.base)}</b></div>
+      <label class="qb-l">שדרוגים (לאדם)</label>
+      ${UPGRADES.map(u=>{const on=(Q.upgrades||[]).some(x=>x.k===u.k);return `<button class="qb-up ${on?'on':''}" data-u="${u.k}"><span>${u.l}</span><span class="qb-up-p">${money(u.pp)}/אדם${on?` · ${money(u.pp*t.g)}`:''}</span></button>`}).join('')}
+      <label class="qb-l">תוספות חופשיות</label>
+      <div id="q-customs">${(Q.custom_lines||[]).map((c,i)=>`<div class="qb-custom"><input class="qb-cn" data-i="${i}" value="${esc(c.name)}" placeholder="תיאור"><input class="qb-ca" data-i="${i}" type="number" inputmode="numeric" value="${c.amount||''}" placeholder="₪"><button class="qb-cpg ${c.per_guest?'on':''}" data-i="${i}">×סועד</button><button class="qb-crm" data-i="${i}">✕</button></div>`).join('')}</div>
+      <button class="qb-addline" id="q-addcustom">+ הוסף שורה</button>
+      <label class="qb-l">הנחה (₪)</label>
+      <input class="qb-in" id="q-disc" type="number" inputmode="numeric" value="${Q.discount||''}" placeholder="0">
+      <label class="qb-l">תוקף ההצעה</label>
+      <div class="qb-seg" id="q-valid">${[7,14,30].map(d=>`<button data-d="${d}" class="${Q.validity_days===d?'on':''}">${d} ימים</button>`).join('')}</div>
+    </div>`;
+  }
+  // step 4 — review
+  const pkg=pkgOf(Q.track,Q.package);
+  return `<div class="qb-review">
+    <div class="qb-rev-h">${esc(Q.client_name)||'לקוח'}</div>
+    <div class="qb-rev-sub">${esc(quoteEventLine())}</div>
+    <div class="qb-rev-pkg">${TRACKS.find(x=>x.k===Q.track).l} · ${pkg.l} · ${money(Q.per_person)} לאדם</div>
+    ${COURSES.map(c=>{const items=(Q.dishes||[]).filter(d=>d.course===c.k);return items.length?`<div class="qb-rev-course"><b>${c.l}</b>${items.map(d=>`<div>${esc(d.name)}</div>`).join('')}</div>`:''}).join('')}
+    <div class="qb-rev-break">
+      <div><span>${money(Q.per_person)} × ${t.g} סועדים</span><b>${money(t.base)}</b></div>
+      ${(Q.upgrades||[]).map(u=>`<div><span>${esc(u.l)}</span><b>${money((u.pp||0)*t.g)}</b></div>`).join('')}
+      ${(Q.custom_lines||[]).filter(c=>c.name).map(c=>`<div><span>${esc(c.name)}</span><b>${money(c.per_guest?(c.amount||0)*t.g:(c.amount||0))}</b></div>`).join('')}
+      ${t.disc?`<div class="disc"><span>הנחה</span><b>−${money(t.disc)}</b></div>`:''}
+      <div class="tot"><span>סה״כ</span><b>${money(t.total)}</b></div>
+    </div>
+    <div class="qb-rev-valid">בתוקף עד ${fmtDate(quoteValidityDate())}</div>
+  </div>`;
+}
+
+function wireQuote(){
+  const b=document.getElementById('quote-builder');if(!b)return;
+  $('#qb-x',b).onclick=()=>{ if(confirm('לסגור את ההצעה? שינויים שלא נשלחו יישמרו רק אם תשמור.'))closeQuote(); };
+  $$('.qb-steps span',b).forEach(s=>s.onclick=()=>{const n=+s.dataset.step;if(n<Q._step){Q._step=n;renderQuote()}});
+  const nx=$('#qb-next',b);if(nx)nx.onclick=()=>{Q._step=Math.min(4,Q._step+1);renderQuote()};
+  // step 1
+  $$('#q-guests',b).forEach(()=>{});
+  const gi=$('#q-guests',b);if(gi)gi.oninput=()=>{Q.guests=Math.max(0,parseInt(gi.value)||0);updateQbTotal()};
+  $$('[data-g]',b).forEach(btn=>btn.onclick=()=>{Q.guests=Math.max(0,(Number(Q.guests)||0)+(+btn.dataset.g));$('#q-guests',b).value=Q.guests;updateQbTotal()});
+  const et=$('#q-etype',b);if(et)et.oninput=()=>Q.event_type=et.value;
+  const ed=$('#q-edate',b);if(ed)ed.oninput=()=>Q.event_date=ed.value||'';
+  // step 2
+  $$('#q-track button',b).forEach(btn=>btn.onclick=()=>{Q.track=btn.dataset.k;Q.dishes=[];Q.per_person=pkgOf(Q.track,Q.package).pp;renderQuote()});
+  $$('#q-pkg button',b).forEach(btn=>btn.onclick=()=>{Q.package=btn.dataset.k;Q.per_person=pkgOf(Q.track,Q.package).pp;renderQuote()});
+  $$('.qb-dish',b).forEach(btn=>btn.onclick=()=>toggleDish(btn.dataset.c,btn.dataset.n));
+  // step 3
+  const pp=$('#q-pp',b);if(pp)pp.oninput=()=>{Q.per_person=Math.max(0,parseFloat(pp.value)||0);updateQbTotal();$('.qb-line',b)&&renderQuote()};
+  $$('.qb-up',b).forEach(btn=>btn.onclick=()=>{const u=UPGRADES.find(x=>x.k===btn.dataset.u);const on=(Q.upgrades||[]).some(x=>x.k===u.k);Q.upgrades=on?Q.upgrades.filter(x=>x.k!==u.k):[...Q.upgrades,{k:u.k,l:u.l,pp:u.pp}];renderQuote()});
+  $('#q-addcustom',b)&&($('#q-addcustom',b).onclick=()=>{Q.custom_lines=[...(Q.custom_lines||[]),{name:'',amount:0,per_guest:false}];renderQuote()});
+  $$('.qb-cn',b).forEach(i=>i.oninput=()=>{Q.custom_lines[+i.dataset.i].name=i.value});
+  $$('.qb-ca',b).forEach(i=>i.oninput=()=>{Q.custom_lines[+i.dataset.i].amount=parseFloat(i.value)||0;updateQbTotal()});
+  $$('.qb-cpg',b).forEach(btn=>btn.onclick=()=>{const c=Q.custom_lines[+btn.dataset.i];c.per_guest=!c.per_guest;renderQuote()});
+  $$('.qb-crm',b).forEach(btn=>btn.onclick=()=>{Q.custom_lines.splice(+btn.dataset.i,1);renderQuote()});
+  const di=$('#q-disc',b);if(di)di.oninput=()=>{Q.discount=Math.max(0,parseFloat(di.value)||0);updateQbTotal()};
+  $$('#q-valid button',b).forEach(btn=>btn.onclick=()=>{Q.validity_days=+btn.dataset.d;renderQuote()});
+  // step 4
+  $('#qb-send',b)&&($('#qb-send',b).onclick=sendQuoteWA);
+  $('#qb-copy',b)&&($('#qb-copy',b).onclick=copyQuoteLink);
+}
+function updateQbTotal(){
+  const b=document.getElementById('quote-builder');if(!b)return;
+  const t=quoteTotals();const tot=$('.qb-total b',b);if(tot)tot.innerHTML=money(t.total);
+  const sub=$('.qb-total .sub',b);if(sub)sub.textContent=`${t.g} סועדים · ₪${Math.round(Q.per_person||0).toLocaleString('he-IL')}/אדם`;
+}
+
+async function saveQuote(extra){
+  const t=quoteTotals();
+  const row=Object.assign({
+    lead_id:Q.lead_id,client_name:Q.client_name||null,event_type:Q.event_type||null,
+    event_date:Q.event_date||null,guests:Number(Q.guests)||null,track:Q.track,package:Q.package,
+    per_person:Number(Q.per_person)||null,dishes:Q.dishes||[],upgrades:Q.upgrades||[],
+    custom_lines:Q.custom_lines||[],discount:Number(Q.discount)||0,total:t.total,
+    validity_date:quoteValidityDate(),notes:Q.notes||null,created_by:actDraft.actor||null,
+    updated_at:new Date().toISOString()
+  },extra||{});
+  if(Q.id){
+    const {error}=await sb.from('crm_quotes').update(row).eq('id',Q.id);
+    if(error){showToast('שמירה נכשלה: '+error.message);return false}
+    return true;
+  }
+  const {data,error}=await sb.from('crm_quotes').insert(row).select().single();
+  if(error){showToast('שמירה נכשלה: '+error.message);return false}
+  Q.id=data.id;Q.token=data.token;return true;
+}
+async function sendQuoteWA(){
+  if(!Q._phone){showToast('אין מספר טלפון לליד');return}
+  const ok=await saveQuote({status:'sent',sent_at:new Date().toISOString()});
+  if(!ok)return;
+  const t=quoteTotals();const url=`${QUOTE_PAGE_URL}?t=${Q.token}`;
+  const msg=`היי ${Q.client_name||''} 🌅\nמצרפים הצעת מחיר אישית לאירוע שלכם ב-Paseo\n${quoteEventLine()}\nסה״כ משוער: ₪${Math.round(t.total).toLocaleString('he-IL')}\n\nלצפייה ולאישור ההצעה:\n${url}\n\nבתוקף עד ${fmtDate(quoteValidityDate())}`;
+  const d=Q._phone.replace(/\D/g,'').replace(/^0/,'972');
+  const lid=Q.lead_id;
+  sb.from('crm_activities').insert({lead_id:lid,kind:'note',body:`📤 נשלחה הצעת מחיר · ₪${Math.round(t.total).toLocaleString('he-IL')} · ${url}`,actor:actDraft.actor||'מערכת'}).then(()=>{if(openLeadId===lid)loadActs(lid)});
+  window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
+  closeQuote();renderQuoteList(lid);showToast('ההצעה נשלחה ✓');
+}
+async function copyQuoteLink(){
+  const ok=await saveQuote(Q.status==='draft'?{status:'sent',sent_at:new Date().toISOString()}:{});
+  if(!ok)return;
+  const url=`${QUOTE_PAGE_URL}?t=${Q.token}`;
+  try{await navigator.clipboard.writeText(url);showToast('הקישור הועתק')}catch(e){prompt('העתק את הקישור:',url)}
+  renderQuoteList(Q.lead_id);
+}
+async function renderQuoteList(leadId){
+  const host=document.getElementById('x-quote-list');if(!host)return;
+  const {data}=await sb.from('crm_quotes').select('*').eq('lead_id',leadId).order('created_at',{ascending:false});
+  if(!data||!data.length){host.innerHTML='';return}
+  host.innerHTML=`<div class="quote-list-l">הצעות מחיר (${data.length})</div>`+data.map(q=>{
+    const pk=pkgOf(q.track||'meat',q.package||'premium');
+    return `<div class="quote-row" data-id="${q.id}">
+      <span class="quote-badge ${q.status}">${QSTAT[q.status]||q.status}</span>
+      <span class="quote-row-main">${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}</span>
+      <button class="quote-link" data-t="${q.token}" title="העתק קישור">🔗</button>
+    </div>`;}).join('');
+  $$('.quote-row',host).forEach(r=>r.onclick=e=>{
+    const q=data.find(x=>x.id===r.dataset.id);
+    if(e.target.closest('.quote-link')){const url=`${QUOTE_PAGE_URL}?t=${q.token}`;navigator.clipboard?.writeText(url).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',url));return}
+    const lead=LEADS.find(x=>x.id===leadId)||{id:leadId,full_name:q.client_name,phone:''};
+    openQuote(lead,q);
+  });
 }
 
 // ===== Auth =====
@@ -1353,6 +1708,12 @@ function drawDetail(){
         <button class="qa del" id="x-del">🗑 מחק ליד</button>
       </div>
 
+      <!-- Quote builder -->
+      <div class="menu-actions">
+        <button class="quote-cta" id="x-quote">🧾 צור הצעת מחיר</button>
+        <div id="x-quote-list"></div>
+      </div>
+
       <!-- Send menu -->
       ${l.phone?`<div class="menu-actions">
         <div class="menu-actions-label">שליחת תפריט אירועים בוואטסאפ:</div>
@@ -1454,6 +1815,8 @@ function drawDetail(){
   $('#x-del',el).onclick=()=>deleteLead(l.id);
   const md=$('#x-menu-dairy',el);if(md)md.onclick=()=>sendMenu('dairy',l);
   const mm=$('#x-menu-meat',el);if(mm)mm.onclick=()=>sendMenu('meat',l);
+  $('#x-quote',el).onclick=()=>openQuote(l);
+  renderQuoteList(l.id);
 
   // Status
   $$('#x-status button',el).forEach(b=>b.onclick=()=>{
