@@ -448,6 +448,13 @@
   .quote-link{background:transparent;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
   .chip.accepted-q{background:rgba(46,204,113,.18);color:#5fd896;font-weight:700}
   .chip.cold{background:rgba(74,144,217,.16);color:#8fc1f0;font-weight:700}
+  .sig-view{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:130;display:flex;align-items:center;justify-content:center;padding:20px}
+  .sig-modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:380px;width:100%;box-shadow:var(--shadow)}
+  .sig-modal-h{display:flex;justify-content:space-between;align-items:center;font-family:'Frank Ruhl Libre',serif;font-size:17px;color:var(--gold-2);font-weight:700}
+  .sig-modal-h button{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px}
+  .sig-modal-name{font-size:13px;color:var(--muted);margin:4px 0 12px}
+  .sig-modal-img{width:100%;background:#fff;border-radius:10px;border:1px solid var(--line);padding:8px}
+  .sig-modal-sub{font-size:12px;color:var(--muted-2);text-align:center;margin-top:10px}
   .stat .n.cold-n{color:#8fc1f0}
 
   /* ===== Needs-attention view ===== */
@@ -1159,14 +1166,28 @@ async function renderQuoteList(leadId){
     return `<div class="quote-row" data-id="${q.id}">
       <span class="quote-badge ${q.status}">${QSTAT[q.status]||q.status}</span>
       <span class="quote-row-main">${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}</span>
+      ${q.signature?`<button class="quote-link" data-sig="${q.id}" title="צפה בחתימה">✍</button>`:''}
       <button class="quote-link" data-t="${q.token}" title="העתק קישור">🔗</button>
     </div>`;}).join('');
   $$('.quote-row',host).forEach(r=>r.onclick=e=>{
     const q=data.find(x=>x.id===r.dataset.id);
+    if(e.target.closest('[data-sig]')){viewSignature(q);return}
     if(e.target.closest('.quote-link')){const url=`${QUOTE_PAGE_URL}?t=${q.token}`;navigator.clipboard?.writeText(url).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',url));return}
     const lead=LEADS.find(x=>x.id===leadId)||{id:leadId,full_name:q.client_name,phone:''};
     openQuote(lead,q);
   });
+}
+function viewSignature(q){
+  let m=document.getElementById('sig-view');if(!m){m=document.createElement('div');m.id='sig-view';m.className='sig-view';document.body.appendChild(m)}
+  const when=q.accepted_at?new Date(q.accepted_at).toLocaleString('he-IL'):'';
+  m.innerHTML=`<div class="sig-modal">
+    <div class="sig-modal-h">חתימת הלקוח<button id="sig-close">✕</button></div>
+    <div class="sig-modal-name">${esc(q.accepted_name||q.client_name||'')}${when?` · ${when}`:''}</div>
+    <img class="sig-modal-img" src="${q.signature}" alt="חתימה">
+    <div class="sig-modal-sub">אישר וחתם על הצעת מחיר · ${money(q.total||0)}</div>
+  </div>`;
+  m.style.display='flex';
+  m.onclick=e=>{if(e.target===m||e.target.closest('#sig-close'))m.remove()};
 }
 
 // ===== Catalog admin =====
