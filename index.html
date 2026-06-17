@@ -446,6 +446,34 @@
   .quote-badge.sent{background:rgba(74,144,217,.18);color:#7fb4e8}
   .quote-badge.accepted{background:rgba(46,204,113,.18);color:#5fd896}
   .quote-link{background:transparent;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
+  .chip.accepted-q{background:rgba(46,204,113,.18);color:#5fd896;font-weight:700}
+
+  /* ===== Needs-attention view ===== */
+  .att-tab{position:relative}
+  .att-badge{display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-right:5px;
+    background:var(--danger);color:#fff;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle}
+  .att-tab.active .att-badge{background:#1a1206}
+  .att-head{font-size:12px;color:var(--muted);font-weight:600;margin:2px 2px 12px}
+  .att-wrap{display:flex;flex-direction:column;gap:10px;max-width:760px}
+  .att-card{background:var(--panel);border:1px solid var(--line);border-right:3px solid var(--muted);border-radius:12px;padding:13px 14px;cursor:pointer;transition:background .12s}
+  .att-card:hover{background:var(--panel-2)}
+  .att-card.att-event{border-right-color:var(--danger)}
+  .att-card.att-offer{border-right-color:var(--st-offer)}
+  .att-card.att-new{border-right-color:var(--st-new)}
+  .att-card.att-stale{border-right-color:var(--warn)}
+  .att-reason{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--gold-2);margin-bottom:6px}
+  .att-reason span{font-size:14px}
+  .att-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .att-meta{font-size:12px;color:var(--muted);margin-top:3px}
+  .att-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .att-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+  .att-btn:active{transform:scale(.96)}
+  .att-btn.wa:hover{border-color:#25d366;color:#25d366}
+  .att-btn.done{border-color:var(--ok);color:#5fd896}
+  .att-btn.no{margin-right:auto;color:var(--muted)}
+  .att-btn.no:hover{border-color:var(--danger);color:var(--danger)}
+  .att-empty{text-align:center;color:var(--muted);padding:60px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:18px;font-weight:600}
+  .att-empty-sub{font-size:13px;font-weight:400;color:var(--muted-2)}
 
   .qb{position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;
     opacity:0;transform:translateY(14px);transition:opacity .22s,transform .22s;overscroll-behavior:contain}
@@ -525,6 +553,32 @@
     .qb-head,.qb-foot{max-width:640px;margin-left:auto;margin-right:auto;width:100%}
     .qb-body{max-width:640px;margin:0 auto;width:100%}
   }
+
+  /* ===== Catalog admin ===== */
+  .ca-seed{text-align:center;color:var(--muted);padding:48px 12px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .ca-seed p{font-size:14px;line-height:1.7}
+  .ca-group{margin-bottom:22px}
+  .ca-gh{font-family:'Frank Ruhl Libre',serif;font-size:16px;color:var(--gold-2);font-weight:700;margin-bottom:10px}
+  .ca-pkg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
+  .ca-pkg-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .ca-pkg-h b{font-size:14px;letter-spacing:.5px}
+  .ca-pp{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
+  .ca-picks{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+  .ca-picks label{font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:3px;text-align:center}
+  .ca-num{width:64px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--txt);font-size:14px;font-family:inherit;outline:none;text-align:center}
+  .ca-num:focus{border-color:var(--gold-dim)}
+  .ca-num.sm{width:100%;padding:7px 4px}
+  .ca-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .ca-txt{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--txt);font-size:14px;font-weight:600;font-family:inherit;outline:none}
+  .ca-txt:focus{border-color:var(--gold-dim);background:var(--panel-2)}
+  .ca-txt.sm{font-size:12px;font-weight:400;color:var(--txt-2);margin-top:6px;width:100%}
+  .ca-dish{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
+  .ca-dish.off{opacity:.5}
+  .ca-dish-top{display:flex;align-items:center;gap:8px}
+  .ca-tog{flex-shrink:0;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:15px;cursor:pointer}
+  .ca-tog.on{background:rgba(46,204,113,.16);border-color:var(--ok);color:#5fd896}
+  .ca-del{flex-shrink:0;background:transparent;border:1px solid transparent;color:var(--danger);font-size:15px;cursor:pointer;padding:8px;border-radius:9px}
+  .ca-del:hover{border-color:var(--danger);background:rgba(231,76,60,.08)}
 </style>
 </head>
 <body>
@@ -660,7 +714,7 @@ const COURSES=[
   {k:'dessert',l:'קינוחים'},
 ];
 // pp = מחיר לאדם; pick = כמה בוחרים מכל קורס
-const PACKAGES={
+const DEFAULT_PACKAGES={
   dairy:[
     {k:'classic',l:'CLASSIC',pp:189,pick:{starter:4,rawbar:0,main:2,dessert:1}},
     {k:'premium',l:'PREMIUM',pp:249,pick:{starter:5,rawbar:1,main:3,dessert:2}},
@@ -672,14 +726,14 @@ const PACKAGES={
     {k:'deluxe', l:'DELUXE', pp:319,pick:{starter:6,rawbar:2,main:4,dessert:2}},
   ],
 };
-const UPGRADES=[
+const DEFAULT_UPGRADES=[
   {k:'wine',    l:'Wine & Beer',          pp:45},
   {k:'open',    l:'Open Bar · אלכוהול חופשי',pp:79},
   {k:'cocktail',l:'תוספת Cocktail Bar',    pp:35},
   {k:'sushi',   l:'עמדת סושי',             pp:45},
 ];
 // [שם, תיאור] — נזרע מהתפריטים הרשמיים
-const DISHES={
+const DEFAULT_DISHES={
   dairy:{
     starter:[['חציל בלאדי','טחינה ביתית, סלסה עגבניות וטוסטונים'],['פלאפל כרובית','כרובית וכמהין במילוי גבינות, שמן ירוק וסלסה'],['סלט שרי וקרעי מוצרלה','בצל סגול, רוקט, שמן זית ובלסמי'],['צלעות תירס','מטוגנות, איולי פפריקה, דבש ופרמז׳ן'],['סלט קיסר','לבבות חסה, קרוטונים, ביצה רכה ופרמזן'],['קרפצ׳יו סלק וגבינת עזים','בצל ירוק, סילאן, שמן זית ואגוזים קלויים'],['סלט אנדיב פרימוורה','תפוח, גבינת עזים, פקאן מסוכר וויניגרט הדרים'],['צ׳יפס אמריקאי','פריך וזהוב'],['לחם הבית','מטבלים, שמן זית, בלסמי ושום קונפי']],
     rawbar:[['סשימי סלמון','טוגראשי, אבוקדו, צ׳ילי חריף ואיולי וואסבי'],['טטאקי טונה','טוגראשי, אבוקדו, צ׳ילי, יוזו ואיולי וואסבי'],['פאני פורי','סביצ׳ה סלמון, מלפפון, כוסברה וקרם פרש יוזו'],['סביצ׳ה ים תיכוני','בצל סגול, צ׳ילי, לימון וכוסברה'],['טוסטדה טונה אדומה','טונה טרייה, אבוקדו, צ׳ילי ואיולי יוזו'],['סביצ׳ה דג לבן','דניס, בצל סגול, צ׳ילי, לימון ושמן צ׳ילי']],
@@ -693,6 +747,30 @@ const DISHES={
     dessert:[['פאדג׳ שוקולד','עוגת שוקולד חמה, קראמבל וגלידת וניל'],['קרם ברולה','תחתית קראמבל וקולי פסיפלורה'],['קינוחי ביס פרווה','מבחר קינוחי ביס'],['פרלינה שוקולד (טבעוני)','קרם שוקולד מריר, גנאש מוקצף ופירות יער']],
   },
 };
+// עותקי עבודה — נטענים מ-crm_catalog אם קיים, אחרת נשארים ברירת המחדל מלמעלה
+let PACKAGES=structuredClone(DEFAULT_PACKAGES);
+let UPGRADES=structuredClone(DEFAULT_UPGRADES);
+let DISHES=structuredClone(DEFAULT_DISHES);
+let CATALOG_ROWS=null; // raw rows when DB-backed
+
+// בונה את PACKAGES/UPGRADES/DISHES מתוך שורות crm_catalog
+function applyCatalog(rows){
+  CATALOG_ROWS=rows;
+  const pk={dairy:[],meat:[]},up=[],di={dairy:{starter:[],rawbar:[],main:[],dessert:[]},meat:{starter:[],rawbar:[],main:[],dessert:[]}};
+  rows.filter(r=>r.active).sort((a,b)=>a.sort-b.sort).forEach(r=>{
+    if(r.type==='package'&&pk[r.track])pk[r.track].push({k:r.key,l:r.name,pp:Number(r.per_person)||0,pick:r.picks||{starter:0,rawbar:0,main:0,dessert:0},_id:r.id});
+    else if(r.type==='upgrade')up.push({k:r.key,l:r.name,pp:Number(r.per_person)||0,_id:r.id});
+    else if(r.type==='dish'&&di[r.track]&&di[r.track][r.course])di[r.track][r.course].push([r.name,r.description||'',r.id]);
+  });
+  if(pk.dairy.length||pk.meat.length)PACKAGES=pk;
+  if(up.length)UPGRADES=up;
+  if(rows.some(r=>r.type==='dish'))DISHES=di;
+}
+async function loadCatalog(){
+  const {data,error}=await sb.from('crm_catalog').select('*');
+  if(error){console.error('catalog',error);return}
+  if(data&&data.length)applyCatalog(data);
+}
 function menuMsg(kind,name){
   const greeting=name?`היי ${name}, `:'היי, ';
   const url=kind==='dairy'?MENU_DAIRY_URL:MENU_MEAT_URL;
@@ -785,6 +863,12 @@ async function addActivity(leadId,kind,body,actor){
 
 // ===== Quote builder =====
 let Q=null; // current quote draft
+let ACCEPTED_LEADS=new Set(); // lead ids that have an accepted quote
+async function loadAcceptedQuotes(){
+  const {data}=await sb.from('crm_quotes').select('lead_id').eq('status','accepted');
+  ACCEPTED_LEADS=new Set((data||[]).map(q=>q.lead_id).filter(Boolean));
+}
+const acceptedChip=l=>ACCEPTED_LEADS.has(l.id)?`<span class="chip accepted-q">✓ הצעה אושרה</span>`:'';
 const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
@@ -1000,16 +1084,116 @@ async function renderQuoteList(leadId){
   });
 }
 
+// ===== Catalog admin =====
+let CAT={tab:'package',track:'meat',course:'starter'};
+async function openCatalogAdmin(){
+  if(!document.getElementById('catalog-admin')){const b=document.createElement('div');b.id='catalog-admin';b.className='qb';document.body.appendChild(b)}
+  const {data}=await sb.from('crm_catalog').select('*');
+  CATALOG_ROWS=data||[];
+  if(CATALOG_ROWS.length)applyCatalog(CATALOG_ROWS);
+  renderCatalogAdmin();
+}
+function closeCatalogAdmin(){const b=document.getElementById('catalog-admin');if(b){b.classList.remove('open');setTimeout(()=>b.remove(),250)}}
+async function seedCatalog(){
+  const rows=[];
+  for(const tr of ['dairy','meat']){
+    DEFAULT_PACKAGES[tr].forEach((p,i)=>rows.push({type:'package',track:tr,key:p.k,name:p.l,per_person:p.pp,picks:p.pick,sort:i}));
+    for(const c of ['starter','rawbar','main','dessert'])(DEFAULT_DISHES[tr][c]||[]).forEach((d,i)=>rows.push({type:'dish',track:tr,course:c,name:d[0],description:d[1],sort:i}));
+  }
+  DEFAULT_UPGRADES.forEach((u,i)=>rows.push({type:'upgrade',key:u.k,name:u.l,per_person:u.pp,sort:i}));
+  const {error}=await sb.from('crm_catalog').insert(rows);
+  if(error){showToast('זריעה נכשלה: '+error.message);return}
+  showToast('הקטלוג אותחל ✓');openCatalogAdmin();
+}
+async function catUpdate(id,patch){
+  const {error}=await sb.from('crm_catalog').update(Object.assign({updated_at:new Date().toISOString()},patch)).eq('id',id);
+  if(error){showToast('שמירה נכשלה');return}
+  const r=CATALOG_ROWS.find(x=>x.id===id);if(r)Object.assign(r,patch);
+  applyCatalog(CATALOG_ROWS);
+}
+async function catAdd(row){const {data,error}=await sb.from('crm_catalog').insert(row).select().single();if(error){showToast('הוספה נכשלה: '+error.message);return}CATALOG_ROWS.push(data);applyCatalog(CATALOG_ROWS);renderCatalogAdmin()}
+async function catDelete(id){if(!confirm('למחוק פריט זה?'))return;const {error}=await sb.from('crm_catalog').delete().eq('id',id);if(error){showToast('מחיקה נכשלה');return}CATALOG_ROWS=CATALOG_ROWS.filter(x=>x.id!==id);applyCatalog(CATALOG_ROWS);renderCatalogAdmin()}
+
+function catSeedView(){return `<div class="ca-seed"><div style="font-size:46px">🍽</div><p>הקטלוג עדיין לא הוקם במסד הנתונים.<br>אתחל אותו מתוך התפריטים הקיימים — ומשם תוכל לערוך הכל כאן בלי קוד.</p><button class="quote-cta" id="ca-seed" style="max-width:280px;margin:0 auto">אתחל קטלוג מברירת מחדל</button></div>`}
+function catBody(){
+  if(CAT.tab==='package'){
+    return TRACKS.map(tr=>{
+      const rows=CATALOG_ROWS.filter(r=>r.type==='package'&&r.track===tr.k).sort((a,b)=>a.sort-b.sort);
+      return `<div class="ca-group"><div class="ca-gh">${tr.ico} מסלול ${tr.l}</div>
+        ${rows.map(r=>`<div class="ca-pkg">
+          <div class="ca-pkg-h"><b>${esc(r.name)}</b><span class="ca-pp">₪<input class="ca-num" data-id="${r.id}" data-f="per_person" type="number" inputmode="numeric" value="${r.per_person||0}"> לאדם</span></div>
+          <div class="ca-picks">${COURSES.map(c=>`<label>${c.l}<input class="ca-num sm" data-id="${r.id}" data-pick="${c.k}" type="number" inputmode="numeric" value="${(r.picks&&r.picks[c.k])||0}"></label>`).join('')}</div>
+        </div>`).join('')}</div>`;
+    }).join('');
+  }
+  if(CAT.tab==='upgrade'){
+    const rows=CATALOG_ROWS.filter(r=>r.type==='upgrade').sort((a,b)=>a.sort-b.sort);
+    return `<div class="ca-group"><div class="ca-gh">שדרוגים · מחיר לאדם</div>
+      ${rows.map(r=>`<div class="ca-row"><input class="ca-txt" data-id="${r.id}" data-f="name" value="${esc(r.name)}"><div class="ca-pp">₪<input class="ca-num" data-id="${r.id}" data-f="per_person" type="number" inputmode="numeric" value="${r.per_person||0}"></div><button class="ca-del" data-id="${r.id}">🗑</button></div>`).join('')}
+      <button class="qb-addline" id="ca-add-up">+ הוסף שדרוג</button></div>`;
+  }
+  return `<div class="qb-seg" id="ca-track">${TRACKS.map(t=>`<button data-k="${t.k}" class="${t.k===CAT.track?'on':''}">${t.ico} ${t.l}</button>`).join('')}</div>
+    <div class="qb-seg" id="ca-course" style="margin-top:8px">${COURSES.map(c=>`<button data-k="${c.k}" class="${c.k===CAT.course?'on':''}">${c.l}</button>`).join('')}</div>
+    <div class="ca-group" style="margin-top:12px">
+      ${CATALOG_ROWS.filter(r=>r.type==='dish'&&r.track===CAT.track&&r.course===CAT.course).sort((a,b)=>a.sort-b.sort).map(r=>`
+        <div class="ca-dish ${r.active?'':'off'}">
+          <div class="ca-dish-top"><input class="ca-txt" data-id="${r.id}" data-f="name" value="${esc(r.name)}">
+            <button class="ca-tog ${r.active?'on':''}" data-id="${r.id}" data-active="${r.active}" title="פעיל/מוסתר">${r.active?'✓':'✕'}</button>
+            <button class="ca-del" data-id="${r.id}">🗑</button></div>
+          <input class="ca-txt sm" data-id="${r.id}" data-f="description" value="${esc(r.description||'')}" placeholder="תיאור המנה"></div>`).join('')}
+      <button class="qb-addline" id="ca-add-dish">+ הוסף מנה</button></div>`;
+}
+function renderCatalogAdmin(){
+  const b=document.getElementById('catalog-admin');if(!b)return;
+  const empty=!CATALOG_ROWS||!CATALOG_ROWS.length;
+  const tabs=[['package','חבילות'],['dish','מנות'],['upgrade','שדרוגים']];
+  b.innerHTML=`
+    <div class="qb-head">
+      <button class="qb-x" id="ca-x">✕</button>
+      <div class="qb-steps">${tabs.map(([k,l])=>`<span class="${CAT.tab===k?'on':'done'}" data-t="${k}">${l}</span>`).join('')}</div>
+      <div class="qb-who">ניהול תפריט</div>
+    </div>
+    <div class="qb-body" id="ca-body">${empty?catSeedView():catBody()}</div>`;
+  setTimeout(()=>b.classList.add('open'),10);
+  wireCatalogAdmin(empty);
+}
+function wireCatalogAdmin(empty){
+  const b=document.getElementById('catalog-admin');if(!b)return;
+  $('#ca-x',b).onclick=closeCatalogAdmin;
+  $$('.qb-steps span',b).forEach(s=>s.onclick=()=>{CAT.tab=s.dataset.t;renderCatalogAdmin()});
+  if(empty){const s=$('#ca-seed',b);if(s)s.onclick=seedCatalog;return}
+  $$('.ca-num[data-f]',b).forEach(i=>i.onchange=()=>catUpdate(i.dataset.id,{[i.dataset.f]:parseFloat(i.value)||0}));
+  $$('.ca-num[data-pick]',b).forEach(i=>i.onchange=()=>{const r=CATALOG_ROWS.find(x=>x.id===i.dataset.id);const picks=Object.assign({},r.picks||{});picks[i.dataset.pick]=parseInt(i.value)||0;catUpdate(i.dataset.id,{picks})});
+  $$('.ca-txt[data-f]',b).forEach(i=>i.onchange=()=>catUpdate(i.dataset.id,{[i.dataset.f]:i.value.trim()||null}));
+  $$('.ca-tog',b).forEach(btn=>btn.onclick=()=>catUpdate(btn.dataset.id,{active:btn.dataset.active!=='true'}).then(renderCatalogAdmin));
+  $$('.ca-del',b).forEach(btn=>btn.onclick=()=>catDelete(btn.dataset.id));
+  $$('#ca-track button',b).forEach(btn=>btn.onclick=()=>{CAT.track=btn.dataset.k;renderCatalogAdmin()});
+  $$('#ca-course button',b).forEach(btn=>btn.onclick=()=>{CAT.course=btn.dataset.k;renderCatalogAdmin()});
+  const ad=$('#ca-add-dish',b);if(ad)ad.onclick=()=>catAdd({type:'dish',track:CAT.track,course:CAT.course,name:'מנה חדשה',description:'',sort:99,active:true});
+  const au=$('#ca-add-up',b);if(au)au.onclick=()=>catAdd({type:'upgrade',key:'u'+Date.now(),name:'שדרוג חדש',per_person:0,sort:99,active:true});
+}
+
 // ===== Auth =====
 async function init(){
   const {data}=await sb.auth.getSession();
   session=data.session;
   if(!session){renderLogin();return}
   renderShell();
+  await loadCatalog();
   await loadLeads();
+  await loadAcceptedQuotes();
+  draw();
   sb.channel('crm-leads').on('postgres_changes',{event:'*',schema:'public',table:'crm_leads'},()=>loadLeads()).subscribe();
   sb.channel('crm-acts').on('postgres_changes',{event:'*',schema:'public',table:'crm_activities'},p=>{
     if(openLeadId&&p.new&&p.new.lead_id===openLeadId)loadActs(openLeadId);
+  }).subscribe();
+  sb.channel('crm-quotes').on('postgres_changes',{event:'*',schema:'public',table:'crm_quotes'},p=>{
+    const r=p.new;if(!r||r.status!=='accepted')return;
+    const isNew=!ACCEPTED_LEADS.has(r.lead_id);
+    ACCEPTED_LEADS.add(r.lead_id);
+    if(isNew)showToast(`🎉 ${r.client_name||'לקוח'} אישר הצעת מחיר!`);
+    if(openLeadId===r.lead_id){loadActs(r.lead_id);renderQuoteList(r.lead_id)}
+    draw();
   }).subscribe();
 }
 function renderLogin(){
@@ -1037,6 +1221,7 @@ function renderShell(){
     <div class="brand">${LOGO_SVG_SMALL}<span class="sub">ניהול לידים</span></div>
     <div class="header-r">
       <button class="add-lead-btn" id="add-lead-btn">+ ליד חדש</button>
+      <button class="pill" id="catalog-btn" title="ניהול תפריט">🍽 תפריט</button>
       <button class="pill" id="export-btn" title="ייצוא לאקסל">⬇ Excel</button>
       <div class="live"><span class="pulse"></span>עדכון חי</div>
       <button class="pill" id="logout">יציאה</button>
@@ -1051,6 +1236,7 @@ function renderShell(){
     <div class="dd" id="dd-assigned" data-filter="assigned"></div>
     <div class="dd" id="dd-time" data-filter="timeframe"></div>
     <div class="views">
+      <button data-v="attention" class="att-tab ${view==='attention'?'active':''}">🔔 לטיפול<span class="att-badge" id="att-badge"></span></button>
       <button data-v="kanban" class="${view==='kanban'?'active':''}">לוח</button>
       <button data-v="table" class="${view==='table'?'active':''}">טבלה</button>
       <button data-v="calendar" class="${view==='calendar'?'active':''}">יומן</button>
@@ -1062,6 +1248,7 @@ function renderShell(){
 
   $('#logout').onclick=async()=>{await sb.auth.signOut();renderLogin()};
   $('#export-btn').onclick=exportExcel;
+  $('#catalog-btn').onclick=openCatalogAdmin;
   $('#add-lead-btn').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#fab-add').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#q').oninput=e=>{search=e.target.value.trim().toLowerCase();draw()};
@@ -1290,13 +1477,63 @@ function isMobile(){return window.matchMedia&&window.matchMedia('(max-width:900p
 function draw(){
   drawSourceTabs();
   drawStats();
-  if(view==='kanban')drawKanban();
+  updateAttBadge();
+  if(view==='attention')drawAttention();
+  else if(view==='kanban')drawKanban();
   else if(view==='table'){
     if(isMobile())drawMobileCards();
     else drawTable();
   }
   else if(view==='dashboard')drawDashboard();
   else drawCalendar();
+}
+
+// ===== Needs-attention triage =====
+// מחזיר {score,icon,reason,cls} אם הליד דורש טיפול, אחרת null. score נמוך=דחוף יותר.
+function attentionInfo(l){
+  if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return null;
+  if(ACCEPTED_LEADS.has(l.id))return null;
+  if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return null; // נדחה (snooze)
+  const since=Math.max(0,Math.floor((Date.now()-new Date(l.updated_at).getTime())/864e5));
+  const dU=l.event_date?daysUntil(l.event_date):null;
+  if(dU!=null&&dU>=0&&dU<=14)return {score:dU,icon:'📅',reason:dU===0?'האירוע היום!':(dU===1?'האירוע מחר':`האירוע בעוד ${dU} ימים`),cls:'att-event'};
+  if(['offer_sent','negotiation'].includes(l.status)&&since>=3)return {score:50+Math.max(0,30-since),icon:'💰',reason:`הצעה נשלחה — אין מענה ${since} ימים`,cls:'att-offer'};
+  if(l.status==='new'&&!l.assigned_to)return {score:120,icon:'🆕',reason:'ליד חדש — לא משויך',cls:'att-new'};
+  if(l.relevance==='relevant'&&since>=7)return {score:160+Math.max(0,30-since),icon:'⏰',reason:`אין פעילות ${since} ימים`,cls:'att-stale'};
+  if(['contacted','meeting','followup'].includes(l.status)&&since>=5)return {score:210,icon:'⏰',reason:`ממתין למעקב · ${since} ימים`,cls:'att-stale'};
+  return null;
+}
+function attentionList(){return LEADS.map(l=>({l,a:attentionInfo(l)})).filter(x=>x.a).sort((x,y)=>x.a.score-y.a.score)}
+function updateAttBadge(){const el=$('#att-badge');if(!el)return;const n=attentionList().length;el.textContent=n||'';el.style.display=n?'inline-flex':'none'}
+function snoozeLead(id,days,msg){const d=new Date();d.setDate(d.getDate()+days);updateLead(id,{followup_reminded_at:d.toISOString()}).then(()=>{showToast(msg);draw()})}
+function drawAttention(){
+  const items=attentionList();
+  const main=$('#main');if(!main)return;
+  if(!items.length){main.innerHTML=`<div class="att-empty"><div style="font-size:52px">🎉</div><div>הכל מטופל!</div><div class="att-empty-sub">אין לידים שדורשים טיפול כרגע.</div></div>`;return}
+  main.innerHTML=`<div class="att-head">${items.length} לידים דורשים טיפול · ממוין לפי דחיפות</div>
+    <div class="att-wrap">${items.map(({l,a})=>{
+      const wa=waLink(l.phone);
+      return `<div class="att-card ${a.cls}" data-id="${l.id}">
+        <div class="att-reason"><span>${a.icon}</span>${a.reason}</div>
+        <div class="att-name">${esc(l.full_name)||'ללא שם'}${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}</div>
+        <div class="att-meta">${[esc(l.event_type),l.event_date?fmtDate(l.event_date):'',l.guests_max?l.guests_max+' סועדים':''].filter(Boolean).join(' · ')||esc(l.phone||'')}</div>
+        <div class="att-actions">
+          ${wa?`<a class="att-btn wa" href="${wa}" target="_blank" data-stop>💬 וואטסאפ</a>`:''}
+          ${l.phone?`<a class="att-btn" href="tel:${esc(l.phone)}" data-stop>📞</a>`:''}
+          <button class="att-btn done" data-act="done" data-stop>✓ טופל</button>
+          <button class="att-btn" data-act="tomorrow" data-stop>⏰ מחר</button>
+          <button class="att-btn no" data-act="irrel" data-stop>🚫</button>
+        </div>
+      </div>`;}).join('')}</div>`;
+  $$('.att-card',main).forEach(c=>c.onclick=e=>{
+    const id=c.dataset.id;const hit=e.target.closest('[data-stop]');
+    if(hit){const act=hit.dataset.act;if(!act)return;e.stopPropagation();
+      if(act==='done')snoozeLead(id,4,'סומן כטופל ✓');
+      else if(act==='tomorrow')snoozeLead(id,1,'יוזכר מחר ⏰');
+      else if(act==='irrel')updateLead(id,{relevance:'irrelevant'}).then(()=>{showToast('סומן כלא רלוונטי');draw()});
+      return;}
+    openDetail(id);
+  });
 }
 
 // ===== Kanban =====
@@ -1356,6 +1593,7 @@ function cardHTML(l){
     <div class="footer">
       <div class="badges">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${acceptedChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.hostess?`<span class="chip hostess">📞 ${esc(l.hostess)}</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
@@ -1506,6 +1744,7 @@ function mobCardHTML(l){
     <div class="mob-card-foot">
       <div class="mob-card-meta">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${acceptedChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
         ${l.relevance&&l.relevance!=='unknown'?`<span class="rel-pill ${rel.cls}">${rel.l}</span>`:''}
