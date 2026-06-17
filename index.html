@@ -456,6 +456,9 @@
     background:var(--danger);color:#fff;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle}
   .att-tab.active .att-badge{background:#1a1206}
   .att-head{font-size:12px;color:var(--muted);font-weight:600;margin:2px 2px 12px}
+  .att-section{margin-bottom:22px;max-width:760px}
+  .att-sec-h{display:flex;align-items:center;gap:8px;font-family:'Frank Ruhl Libre',serif;font-size:16px;font-weight:700;color:var(--gold-2);margin-bottom:10px}
+  .att-sec-n{font-family:'Heebo';font-size:12px;font-weight:800;background:var(--panel-3);color:var(--txt-2);border-radius:999px;min-width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
   .att-wrap{display:flex;flex-direction:column;gap:10px;max-width:760px}
   .att-card{background:var(--panel);border:1px solid var(--line);border-right:3px solid var(--muted);border-radius:12px;padding:13px 14px;cursor:pointer;transition:background .12s}
   .att-card:hover{background:var(--panel-2)}
@@ -1550,44 +1553,60 @@ function draw(){
   else drawCalendar();
 }
 
-// ===== Needs-attention triage =====
-// מחזיר {score,icon,reason,cls} אם הליד דורש טיפול, אחרת null. score נמוך=דחוף יותר.
-function attentionInfo(l){
-  if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return null;
-  if(ACCEPTED_LEADS.has(l.id))return null;
-  if(isCold(l)||isPast(l))return null; // קר או אירוע שעבר — ירד מהמעקב הפעיל
-  if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return null; // נדחה (snooze)
-  const since=Math.max(0,Math.floor((Date.now()-new Date(l.updated_at).getTime())/864e5));
-  const dU=l.event_date?daysUntil(l.event_date):null;
-  if(dU!=null&&dU>=0&&dU<=14)return {score:dU,icon:'📅',reason:dU===0?'האירוע היום!':(dU===1?'האירוע מחר':`האירוע בעוד ${dU} ימים`),cls:'att-event'};
-  if(['offer_sent','negotiation'].includes(l.status)&&since>=3)return {score:50+Math.max(0,30-since),icon:'💰',reason:`הצעה נשלחה — אין מענה ${since} ימים`,cls:'att-offer'};
-  if(l.status==='new'&&!l.assigned_to)return {score:120,icon:'🆕',reason:'ליד חדש — לא משויך',cls:'att-new'};
-  if(l.relevance==='relevant'&&since>=7)return {score:160+Math.max(0,30-since),icon:'⏰',reason:`אין פעילות ${since} ימים`,cls:'att-stale'};
-  if(['contacted','meeting','followup'].includes(l.status)&&since>=5)return {score:210,icon:'⏰',reason:`ממתין למעקב · ${since} ימים`,cls:'att-stale'};
-  return null;
+// ===== Needs-attention triage (מקובץ לסקציות — לידים חדשים לא נקברים) =====
+function attentionGroups(){
+  const G={new:[],event:[],offer:[],followup:[]};
+  LEADS.forEach(l=>{
+    if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return;
+    if(ACCEPTED_LEADS.has(l.id)||isCold(l)||isPast(l))return;
+    if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return; // נדחה
+    const since=leadStale(l);
+    const dU=l.event_date?daysUntil(l.event_date):null;
+    if(l.status==='new')
+      G.new.push({l,icon:'🆕',reason:'ליד חדש'+(l.assigned_to?'':' · לא משויך'),sort:-new Date(l.received_at||l.created_at).getTime()});
+    else if(dU!=null&&dU>=0&&dU<=14)
+      G.event.push({l,icon:'📅',reason:dU===0?'האירוע היום!':(dU===1?'האירוע מחר':`האירוע בעוד ${dU} ימים`),sort:dU});
+    else if(['offer_sent','negotiation'].includes(l.status)&&since>=3)
+      G.offer.push({l,icon:'💰',reason:`הצעה נשלחה — אין מענה ${since} ימים`,sort:-since});
+    else if((l.relevance==='relevant'||['contacted','meeting','followup'].includes(l.status))&&since>=7)
+      G.followup.push({l,icon:'⏰',reason:`אין פעילות ${since} ימים`,sort:-since});
+  });
+  Object.values(G).forEach(a=>a.sort((x,y)=>x.sort-y.sort));
+  return G;
 }
-function attentionList(){return LEADS.map(l=>({l,a:attentionInfo(l)})).filter(x=>x.a).sort((x,y)=>x.a.score-y.a.score)}
-function updateAttBadge(){const el=$('#att-badge');if(!el)return;const n=attentionList().length;el.textContent=n||'';el.style.display=n?'inline-flex':'none'}
+function attentionCount(){const G=attentionGroups();return G.new.length+G.event.length+G.offer.length+G.followup.length}
+function updateAttBadge(){const el=$('#att-badge');if(!el)return;const n=attentionCount();el.textContent=n||'';el.style.display=n?'inline-flex':'none'}
 function snoozeLead(id,days,msg){const d=new Date();d.setDate(d.getDate()+days);updateLead(id,{followup_reminded_at:d.toISOString()}).then(()=>{showToast(msg);draw()})}
+function attCard(item,cls){
+  const {l,icon,reason}=item;const wa=waLink(l.phone);
+  return `<div class="att-card ${cls}" data-id="${l.id}">
+    <div class="att-reason"><span>${icon}</span>${reason}</div>
+    <div class="att-name">${esc(l.full_name)||'ללא שם'}${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}</div>
+    <div class="att-meta">${[esc(l.event_type),l.event_date?fmtDate(l.event_date):'',l.guests_max?l.guests_max+' סועדים':''].filter(Boolean).join(' · ')||esc(l.phone||'')}</div>
+    <div class="att-actions">
+      ${wa?`<a class="att-btn wa" href="${wa}" target="_blank" data-stop>💬 וואטסאפ</a>`:''}
+      ${l.phone?`<a class="att-btn" href="tel:${esc(l.phone)}" data-stop>📞</a>`:''}
+      <button class="att-btn done" data-act="done" data-stop>✓ טופל</button>
+      <button class="att-btn" data-act="tomorrow" data-stop>⏰ מחר</button>
+      <button class="att-btn no" data-act="irrel" data-stop>🚫</button>
+    </div>
+  </div>`;
+}
 function drawAttention(){
-  const items=attentionList();
   const main=$('#main');if(!main)return;
-  if(!items.length){main.innerHTML=`<div class="att-empty"><div style="font-size:52px">🎉</div><div>הכל מטופל!</div><div class="att-empty-sub">אין לידים שדורשים טיפול כרגע.</div></div>`;return}
-  main.innerHTML=`<div class="att-head">${items.length} לידים דורשים טיפול · ממוין לפי דחיפות</div>
-    <div class="att-wrap">${items.map(({l,a})=>{
-      const wa=waLink(l.phone);
-      return `<div class="att-card ${a.cls}" data-id="${l.id}">
-        <div class="att-reason"><span>${a.icon}</span>${a.reason}</div>
-        <div class="att-name">${esc(l.full_name)||'ללא שם'}${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}</div>
-        <div class="att-meta">${[esc(l.event_type),l.event_date?fmtDate(l.event_date):'',l.guests_max?l.guests_max+' סועדים':''].filter(Boolean).join(' · ')||esc(l.phone||'')}</div>
-        <div class="att-actions">
-          ${wa?`<a class="att-btn wa" href="${wa}" target="_blank" data-stop>💬 וואטסאפ</a>`:''}
-          ${l.phone?`<a class="att-btn" href="tel:${esc(l.phone)}" data-stop>📞</a>`:''}
-          <button class="att-btn done" data-act="done" data-stop>✓ טופל</button>
-          <button class="att-btn" data-act="tomorrow" data-stop>⏰ מחר</button>
-          <button class="att-btn no" data-act="irrel" data-stop>🚫</button>
-        </div>
-      </div>`;}).join('')}</div>`;
+  const G=attentionGroups();
+  if(!attentionCount()){main.innerHTML=`<div class="att-empty"><div style="font-size:52px">🎉</div><div>הכל מטופל!</div><div class="att-empty-sub">אין לידים שדורשים טיפול כרגע.</div></div>`;return}
+  const sections=[
+    ['new','🆕 לידים חדשים','att-new'],
+    ['event','📅 אירועים קרובים','att-event'],
+    ['offer','💰 הצעות ללא מענה','att-offer'],
+    ['followup','⏰ ממתינים למעקב','att-stale'],
+  ];
+  main.innerHTML=sections.filter(([k])=>G[k].length).map(([k,label,cls])=>`
+    <div class="att-section">
+      <div class="att-sec-h">${label}<span class="att-sec-n">${G[k].length}</span></div>
+      <div class="att-wrap">${G[k].map(it=>attCard(it,cls)).join('')}</div>
+    </div>`).join('');
   $$('.att-card',main).forEach(c=>c.onclick=e=>{
     const id=c.dataset.id;const hit=e.target.closest('[data-stop]');
     if(hit){const act=hit.dataset.act;if(!act)return;e.stopPropagation();
