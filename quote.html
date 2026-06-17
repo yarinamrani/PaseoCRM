@@ -150,12 +150,20 @@ async function load(){
 
 function render(q){
   const g=Number(q.guests)||0;
+  const kids=Number(q.kids_count)||0;
   const base=(Number(q.per_person)||0)*g;
+  const kidsAmt=(Number(q.price_per_child)||0)*kids;
   const ups=(q.upgrades||[]).map(u=>({l:u.l||UP_DESC[u.k]||u.k,amt:(Number(u.pp)||0)*g}));
+  const svcs=(q.services||[]).map(s=>({l:(s.l||s.k)+((s.qty||1)>1?` ×${s.qty}`:''),amt:s.included?0:(Number(s.price)||0)*(Number(s.qty)||1),included:!!s.included}));
   const customs=(q.custom_lines||[]).filter(c=>c.name).map(c=>({l:c.name,amt:c.per_guest?(Number(c.amount)||0)*g:(Number(c.amount)||0)}));
   const disc=Number(q.discount)||0;
   const accepted=q.status==='accepted';
   const img=IMGS[q.track]||IMGS.meat;
+  // VAT breakdown — new quotes store subtotal+vat_amount; older ones store a pre-VAT total
+  const total=Number(q.total)||0;
+  let pre,vat,grand;
+  if(q.subtotal!=null){pre=Number(q.subtotal);vat=Number(q.vat_amount)||0;grand=total;}
+  else{pre=total;vat=total*0.18;grand=total*1.18;}
   const menuHtml=COURSES.map(([k,l])=>{
     const items=(q.dishes||[]).filter(d=>d.course===k);
     return items.length?`<div class="course"><b>${l}</b>${items.map(d=>`<div class="d">${esc(d.name)}</div>`).join('')}</div>`:'';
@@ -172,7 +180,7 @@ function render(q){
 
       <div class="card">
         <div class="ev-h">${esc(q.client_name)||'הצעת מחיר'}</div>
-        <div class="ev-sub">${[esc(q.event_type),(g?g+' סועדים':''),(q.event_date?fmtDate(q.event_date):'')].filter(Boolean).join(' · ')}</div>
+        <div class="ev-sub">${[esc(q.event_type),(g?g+' מבוגרים':''),(kids?kids+' ילדים':''),(q.event_date?fmtDate(q.event_date):''),esc(q.event_hours||'')].filter(Boolean).join(' · ')}</div>
         <span class="ev-pkg">${TRACKS[q.track]||''} · ${PKG[q.package]||''} · ${money(q.per_person)} לאדם</span>
       </div>
 
@@ -183,13 +191,17 @@ function render(q){
       <div class="card">
         <div class="sec-t">פירוט מחיר</div>
         <div class="brk">
-          <div><span>${money(q.per_person)} × ${g} סועדים</span><b>${money(base)}</b></div>
+          <div><span>${money(q.per_person)} × ${g} מבוגרים</span><b>${money(base)}</b></div>
+          ${kids?`<div><span>${money(q.price_per_child)} × ${kids} ילדים</span><b>${money(kidsAmt)}</b></div>`:''}
           ${ups.map(u=>`<div><span>${esc(u.l)}</span><b>${money(u.amt)}</b></div>`).join('')}
+          ${svcs.map(s=>`<div><span>${esc(s.l)}</span><b>${s.included?'כלול':money(s.amt)}</b></div>`).join('')}
           ${customs.map(c=>`<div><span>${esc(c.l)}</span><b>${money(c.amt)}</b></div>`).join('')}
           ${disc?`<div class="disc"><span>הנחה</span><b>−${money(disc)}</b></div>`:''}
-          <div class="tot"><span>סה״כ משוער</span><b>${money(q.total)}</b></div>
+          <div><span>סכום ביניים</span><b>${money(pre)}</b></div>
+          <div><span>מע״מ 18%</span><b>${money(vat)}</b></div>
+          <div class="tot"><span>סה״כ לתשלום</span><b>${money(grand)}</b></div>
         </div>
-        <div class="vat">המחירים אינם כוללים מע״מ · ייתכנו התאמות בהתאם לפרטי האירוע</div>
+        <div class="vat">המחירים כוללים מע״מ · ייתכנו התאמות בהתאם לפרטי האירוע הסופיים</div>
       </div>
 
       <div class="card"><div class="sec-t">תנאי ההזמנה</div>

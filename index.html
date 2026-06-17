@@ -532,6 +532,16 @@
   .qb-up-p{font-size:12px;color:var(--muted)}
   .qb-up.on{border-color:var(--gold);background:var(--gold-soft)}
   .qb-up.on .qb-up-p{color:var(--gold-2)}
+  .qb-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .qb-two .qb-l{margin-top:0}
+  .qb-svc{margin-bottom:7px}
+  .qb-svc-tog{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px;cursor:pointer;color:var(--txt);font-size:13px;font-weight:600;font-family:inherit}
+  .qb-svc.on .qb-svc-tog{border-color:var(--gold);background:var(--gold-soft);border-radius:11px 11px 0 0}
+  .qb-svc-cfg{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--gold);border-top:none;border-radius:0 0 11px 11px;padding:9px 11px}
+  .qb-svc-cfg label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+  .qb-svc-cfg input{width:60px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;text-align:center}
+  .qb-svc-inc{margin-right:auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qb-svc-inc.on{background:var(--ok);color:#0b2415;border-color:var(--ok)}
   .qb-custom{display:flex;gap:6px;margin-bottom:6px;align-items:center}
   .qb-custom .qb-cn{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--txt);font-size:13px;font-family:inherit;outline:none}
   .qb-custom .qb-ca{width:74px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;text-align:center}
@@ -739,6 +749,15 @@ const DEFAULT_PACKAGES={
     {k:'deluxe', l:'DELUXE', pp:319,pick:{starter:6,rawbar:2,main:4,dessert:2}},
   ],
 };
+// שירותי אירוע (מחיר קבוע × כמות). נזרע מ-EventMaker, ניתן לעריכה במסך התפריט.
+const DEFAULT_SERVICES=[
+  {k:'dj',l:'דיג׳יי',price:0},{k:'light',l:'תאורה',price:0},{k:'sound',l:'הגברה',price:0},
+  {k:'grill',l:'מנגל אירוע',price:1000},{k:'clean',l:'ניקיון',price:1000},
+  {k:'softbar',l:'בר שתייה קלה',price:0},{k:'alcohol',l:'אלכוהול',price:0},
+  {k:'winebeer',l:'בירות ויינות',price:0},{k:'cocktails',l:'קוקטיילים',price:0},
+  {k:'hotdrinks',l:'שתייה חמה',price:0},{k:'coffee',l:'קפה ומאפים',price:0},
+  {k:'projector',l:'מקרן',price:0},{k:'venue',l:'השכרת המקום',price:0},
+];
 const DEFAULT_UPGRADES=[
   {k:'wine',    l:'Wine & Beer',          pp:45},
   {k:'open',    l:'Open Bar · אלכוהול חופשי',pp:79},
@@ -763,20 +782,23 @@ const DEFAULT_DISHES={
 // עותקי עבודה — נטענים מ-crm_catalog אם קיים, אחרת נשארים ברירת המחדל מלמעלה
 let PACKAGES=structuredClone(DEFAULT_PACKAGES);
 let UPGRADES=structuredClone(DEFAULT_UPGRADES);
+let SERVICES=structuredClone(DEFAULT_SERVICES);
 let DISHES=structuredClone(DEFAULT_DISHES);
 let CATALOG_ROWS=null; // raw rows when DB-backed
 
-// בונה את PACKAGES/UPGRADES/DISHES מתוך שורות crm_catalog
+// בונה את PACKAGES/UPGRADES/SERVICES/DISHES מתוך שורות crm_catalog
 function applyCatalog(rows){
   CATALOG_ROWS=rows;
-  const pk={dairy:[],meat:[]},up=[],di={dairy:{starter:[],rawbar:[],main:[],dessert:[]},meat:{starter:[],rawbar:[],main:[],dessert:[]}};
+  const pk={dairy:[],meat:[]},up=[],sv=[],di={dairy:{starter:[],rawbar:[],main:[],dessert:[]},meat:{starter:[],rawbar:[],main:[],dessert:[]}};
   rows.filter(r=>r.active).sort((a,b)=>a.sort-b.sort).forEach(r=>{
     if(r.type==='package'&&pk[r.track])pk[r.track].push({k:r.key,l:r.name,pp:Number(r.per_person)||0,pick:r.picks||{starter:0,rawbar:0,main:0,dessert:0},_id:r.id});
     else if(r.type==='upgrade')up.push({k:r.key,l:r.name,pp:Number(r.per_person)||0,_id:r.id});
+    else if(r.type==='service')sv.push({k:r.key,l:r.name,price:Number(r.per_person)||0,_id:r.id});
     else if(r.type==='dish'&&di[r.track]&&di[r.track][r.course])di[r.track][r.course].push([r.name,r.description||'',r.id]);
   });
   if(pk.dairy.length||pk.meat.length)PACKAGES=pk;
   if(up.length)UPGRADES=up;
+  if(sv.length)SERVICES=sv;
   if(rows.some(r=>r.type==='dish'))DISHES=di;
 }
 async function loadCatalog(){
@@ -897,13 +919,21 @@ const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
 
+const VAT_RATE=0.18;
 function quoteTotals(){
-  const g=Number(Q.guests)||0;
+  const g=Number(Q.guests)||0;                 // מבוגרים
+  const k=Number(Q.kids_count)||0;             // ילדים
   const base=(Number(Q.per_person)||0)*g;
+  const kids=(Number(Q.price_per_child)||0)*k;
   const ups=(Q.upgrades||[]).reduce((s,u)=>s+(Number(u.pp)||0)*g,0);
+  const svc=(Q.services||[]).reduce((s,x)=>s+(x.included?0:(Number(x.price)||0)*(Number(x.qty)||1)),0);
   const customs=(Q.custom_lines||[]).reduce((s,c)=>s+(c.per_guest?(Number(c.amount)||0)*g:(Number(c.amount)||0)),0);
   const disc=Number(Q.discount)||0;
-  return {g,base,ups,customs,disc,total:Math.max(0,base+ups+customs-disc)};
+  const lines=Math.max(0,base+kids+ups+svc+customs-disc);
+  let pre,vat,total;
+  if(Q.vat_included){total=lines;pre=lines/(1+VAT_RATE);vat=total-pre;}
+  else{pre=lines;vat=lines*VAT_RATE;total=lines+vat;}
+  return {g,k,base,kids,ups,svc,customs,disc,pre,vat,total};
 }
 function quoteValidityDate(){const d=new Date();d.setDate(d.getDate()+(Number(Q.validity_days)||14));return d.toISOString().slice(0,10)}
 function quoteEventLine(){return [Q.event_type,(Q.guests?Q.guests+' סועדים':''),(Q.event_date?fmtDate(Q.event_date):'')].filter(Boolean).join(' · ')}
@@ -917,14 +947,14 @@ function toggleDish(course,name){
 function openQuote(lead,existing){
   const guess=lead.guests_max||lead.guests_min||(lead.guests_raw?parseInt(lead.guests_raw):0)||50;
   if(existing){
-    Q=Object.assign({},existing,{_step:1,_phone:lead.phone||'',
-      dishes:existing.dishes||[],upgrades:existing.upgrades||[],custom_lines:existing.custom_lines||[],
+    Q=Object.assign({kids_count:0,price_per_child:0,event_hours:'',vat_included:false,services:[],kids_menu:''},existing,{_step:1,_phone:lead.phone||'',
+      dishes:existing.dishes||[],upgrades:existing.upgrades||[],custom_lines:existing.custom_lines||[],services:existing.services||[],
       validity_days:existing.validity_date?Math.max(1,Math.round((new Date(existing.validity_date)-new Date())/864e5)):14});
   } else {
     Q={lead_id:lead.id,id:null,token:null,status:'draft',_step:1,_phone:lead.phone||'',
-      client_name:lead.full_name||'',event_type:lead.event_type||'',event_date:lead.event_date||'',
-      guests:guess,track:'meat',package:'premium',per_person:pkgOf('meat','premium').pp,
-      dishes:[],upgrades:[],custom_lines:[],discount:0,validity_days:14,notes:''};
+      client_name:lead.full_name||'',event_type:lead.event_type||'',event_date:lead.event_date||'',event_hours:lead.event_time||'',
+      guests:guess,kids_count:0,price_per_child:0,track:'meat',package:'premium',per_person:pkgOf('meat','premium').pp,
+      dishes:[],upgrades:[],services:[],custom_lines:[],discount:0,vat_included:false,validity_days:14,notes:'',kids_menu:''};
   }
   if(!document.getElementById('quote-builder')){
     const b=document.createElement('div');b.id='quote-builder';b.className='qb';document.body.appendChild(b);
@@ -945,7 +975,7 @@ function renderQuote(){
     </div>
     <div class="qb-body" id="qb-body">${quoteStep()}</div>
     <div class="qb-foot">
-      ${Q._step<4?`<div class="qb-total"><span class="lbl">סה״כ משוער</span><b>${money(t.total)}</b><span class="sub">${t.g} סועדים · ${money(Q.per_person)}/אדם</span></div>
+      ${Q._step<4?`<div class="qb-total"><span class="lbl">סה״כ · כולל מע״מ</span><b>${money(t.total)}</b><span class="sub">${t.g} מבוגרים${t.k?` + ${t.k} ילדים`:''}</span></div>
         <button class="qb-next" id="qb-next">${Q._step===3?'סקירה':'הבא'} ←</button>`
       :`<button class="qb-send" id="qb-send">💬 שלח בוואטסאפ</button>
         <button class="qb-copy" id="qb-copy">העתק קישור</button>`}
@@ -958,12 +988,18 @@ function quoteStep(){
   const t=quoteTotals();
   if(Q._step===1){
     return `<div class="qb-sec">
-      <label class="qb-l">כמות סועדים</label>
+      <label class="qb-l">כמות סועדים (מבוגרים)</label>
       <div class="qb-stepper"><button data-g="-1">−</button><input id="q-guests" type="number" inputmode="numeric" value="${Q.guests||''}"><button data-g="1">+</button></div>
+      <div class="qb-two">
+        <div><label class="qb-l">ילדים</label><input class="qb-in" id="q-kids" type="number" inputmode="numeric" value="${Q.kids_count||''}" placeholder="0"></div>
+        <div><label class="qb-l">מחיר לילד (₪)</label><input class="qb-in" id="q-ppc" type="number" inputmode="numeric" value="${Q.price_per_child||''}" placeholder="0"></div>
+      </div>
       <label class="qb-l">סוג אירוע</label>
       <input class="qb-in" id="q-etype" value="${esc(Q.event_type)}" placeholder="לדוגמה: יום הולדת 50">
-      <label class="qb-l">תאריך האירוע</label>
-      <input class="qb-in" id="q-edate" type="date" value="${Q.event_date||''}">
+      <div class="qb-two">
+        <div><label class="qb-l">תאריך</label><input class="qb-in" id="q-edate" type="date" value="${Q.event_date||''}"></div>
+        <div><label class="qb-l">שעות</label><input class="qb-in" id="q-ehours" value="${esc(Q.event_hours||'')}" placeholder="12:00-16:00"></div>
+      </div>
     </div>`;
   }
   if(Q._step===2){
@@ -986,31 +1022,44 @@ function quoteStep(){
     return `<div class="qb-sec">
       <label class="qb-l">מחיר לאדם (₪)</label>
       <input class="qb-in" id="q-pp" type="number" inputmode="numeric" value="${Q.per_person||''}">
-      <div class="qb-line">${money(Q.per_person)} × ${t.g} סועדים = <b>${money(t.base)}</b></div>
+      <div class="qb-line">${money(Q.per_person)} × ${t.g} מבוגרים = <b>${money(t.base)}</b>${t.k?` · ${money(Q.price_per_child)} × ${t.k} ילדים = <b>${money(t.kids)}</b>`:''}</div>
       <label class="qb-l">שדרוגים (לאדם)</label>
       ${UPGRADES.map(u=>{const on=(Q.upgrades||[]).some(x=>x.k===u.k);return `<button class="qb-up ${on?'on':''}" data-u="${u.k}"><span>${u.l}</span><span class="qb-up-p">${money(u.pp)}/אדם${on?` · ${money(u.pp*t.g)}`:''}</span></button>`}).join('')}
+      <label class="qb-l">שירותים</label>
+      ${SERVICES.map(s=>{const sel=(Q.services||[]).find(x=>x.k===s.k);const on=!!sel;return `<div class="qb-svc ${on?'on':''}">
+        <button class="qb-svc-tog" data-s="${s.k}"><span>${esc(s.l)}</span><span class="qb-up-p">${on?(sel.included?'כלול':money((sel.price||0)*(sel.qty||1))):money(s.price)+' ליח׳'}</span></button>
+        ${on?`<div class="qb-svc-cfg"><label>₪<input class="qb-svc-price" data-s="${s.k}" type="number" inputmode="numeric" value="${sel.price||0}"></label><label>כמות<input class="qb-svc-qty" data-s="${s.k}" type="number" inputmode="numeric" value="${sel.qty||1}"></label><button class="qb-svc-inc ${sel.included?'on':''}" data-s="${s.k}">כלול חינם</button></div>`:''}
+      </div>`}).join('')}
       <label class="qb-l">תוספות חופשיות</label>
       <div id="q-customs">${(Q.custom_lines||[]).map((c,i)=>`<div class="qb-custom"><input class="qb-cn" data-i="${i}" value="${esc(c.name)}" placeholder="תיאור"><input class="qb-ca" data-i="${i}" type="number" inputmode="numeric" value="${c.amount||''}" placeholder="₪"><button class="qb-cpg ${c.per_guest?'on':''}" data-i="${i}">×סועד</button><button class="qb-crm" data-i="${i}">✕</button></div>`).join('')}</div>
       <button class="qb-addline" id="q-addcustom">+ הוסף שורה</button>
       <label class="qb-l">הנחה (₪)</label>
       <input class="qb-in" id="q-disc" type="number" inputmode="numeric" value="${Q.discount||''}" placeholder="0">
+      <label class="qb-l">מע״מ</label>
+      <div class="qb-seg" id="q-vat"><button data-v="0" class="${!Q.vat_included?'on':''}">+ מע״מ (לא כלול)</button><button data-v="1" class="${Q.vat_included?'on':''}">כולל מע״מ</button></div>
+      <div class="qb-line">ביניים ${money(t.pre)} · מע״מ ${money(t.vat)} · סה״כ <b>${money(t.total)}</b></div>
       <label class="qb-l">תוקף ההצעה</label>
       <div class="qb-seg" id="q-valid">${[7,14,30].map(d=>`<button data-d="${d}" class="${Q.validity_days===d?'on':''}">${d} ימים</button>`).join('')}</div>
     </div>`;
   }
   // step 4 — review
   const pkg=pkgOf(Q.track,Q.package);
+  const evLine=[Q.event_type,(t.g?t.g+' מבוגרים':''),(t.k?t.k+' ילדים':''),(Q.event_date?fmtDate(Q.event_date):''),esc(Q.event_hours||'')].filter(Boolean).join(' · ');
   return `<div class="qb-review">
     <div class="qb-rev-h">${esc(Q.client_name)||'לקוח'}</div>
-    <div class="qb-rev-sub">${esc(quoteEventLine())}</div>
+    <div class="qb-rev-sub">${evLine}</div>
     <div class="qb-rev-pkg">${TRACKS.find(x=>x.k===Q.track).l} · ${pkg.l} · ${money(Q.per_person)} לאדם</div>
     ${COURSES.map(c=>{const items=(Q.dishes||[]).filter(d=>d.course===c.k);return items.length?`<div class="qb-rev-course"><b>${c.l}</b>${items.map(d=>`<div>${esc(d.name)}</div>`).join('')}</div>`:''}).join('')}
     <div class="qb-rev-break">
-      <div><span>${money(Q.per_person)} × ${t.g} סועדים</span><b>${money(t.base)}</b></div>
+      <div><span>${money(Q.per_person)} × ${t.g} מבוגרים</span><b>${money(t.base)}</b></div>
+      ${t.k?`<div><span>${money(Q.price_per_child)} × ${t.k} ילדים</span><b>${money(t.kids)}</b></div>`:''}
       ${(Q.upgrades||[]).map(u=>`<div><span>${esc(u.l)}</span><b>${money((u.pp||0)*t.g)}</b></div>`).join('')}
+      ${(Q.services||[]).map(s=>`<div><span>${esc(s.l)}${s.qty>1?` ×${s.qty}`:''}</span><b>${s.included?'כלול':money((s.price||0)*(s.qty||1))}</b></div>`).join('')}
       ${(Q.custom_lines||[]).filter(c=>c.name).map(c=>`<div><span>${esc(c.name)}</span><b>${money(c.per_guest?(c.amount||0)*t.g:(c.amount||0))}</b></div>`).join('')}
       ${t.disc?`<div class="disc"><span>הנחה</span><b>−${money(t.disc)}</b></div>`:''}
-      <div class="tot"><span>סה״כ</span><b>${money(t.total)}</b></div>
+      <div><span>סכום ביניים</span><b>${money(t.pre)}</b></div>
+      <div><span>מע״מ 18%</span><b>${money(t.vat)}</b></div>
+      <div class="tot"><span>סה״כ לתשלום</span><b>${money(t.total)}</b></div>
     </div>
     <div class="qb-rev-valid">בתוקף עד ${fmtDate(quoteValidityDate())}</div>
   </div>`;
@@ -1027,6 +1076,9 @@ function wireQuote(){
   $$('[data-g]',b).forEach(btn=>btn.onclick=()=>{Q.guests=Math.max(0,(Number(Q.guests)||0)+(+btn.dataset.g));$('#q-guests',b).value=Q.guests;updateQbTotal()});
   const et=$('#q-etype',b);if(et)et.oninput=()=>Q.event_type=et.value;
   const ed=$('#q-edate',b);if(ed)ed.oninput=()=>Q.event_date=ed.value||'';
+  const eh=$('#q-ehours',b);if(eh)eh.oninput=()=>Q.event_hours=eh.value;
+  const ki=$('#q-kids',b);if(ki)ki.oninput=()=>{Q.kids_count=Math.max(0,parseInt(ki.value)||0);updateQbTotal()};
+  const pc=$('#q-ppc',b);if(pc)pc.oninput=()=>{Q.price_per_child=Math.max(0,parseFloat(pc.value)||0);updateQbTotal()};
   // step 2
   $$('#q-track button',b).forEach(btn=>btn.onclick=()=>{Q.track=btn.dataset.k;Q.dishes=[];Q.per_person=pkgOf(Q.track,Q.package).pp;renderQuote()});
   $$('#q-pkg button',b).forEach(btn=>btn.onclick=()=>{Q.package=btn.dataset.k;Q.per_person=pkgOf(Q.track,Q.package).pp;renderQuote()});
@@ -1039,7 +1091,13 @@ function wireQuote(){
   $$('.qb-ca',b).forEach(i=>i.oninput=()=>{Q.custom_lines[+i.dataset.i].amount=parseFloat(i.value)||0;updateQbTotal()});
   $$('.qb-cpg',b).forEach(btn=>btn.onclick=()=>{const c=Q.custom_lines[+btn.dataset.i];c.per_guest=!c.per_guest;renderQuote()});
   $$('.qb-crm',b).forEach(btn=>btn.onclick=()=>{Q.custom_lines.splice(+btn.dataset.i,1);renderQuote()});
+  // services
+  $$('.qb-svc-tog',b).forEach(btn=>btn.onclick=()=>{const s=SERVICES.find(x=>x.k===btn.dataset.s);const on=(Q.services||[]).some(x=>x.k===s.k);Q.services=on?Q.services.filter(x=>x.k!==s.k):[...(Q.services||[]),{k:s.k,l:s.l,price:s.price,qty:1,included:false}];renderQuote()});
+  $$('.qb-svc-price',b).forEach(i=>i.oninput=()=>{const s=Q.services.find(x=>x.k===i.dataset.s);if(s){s.price=parseFloat(i.value)||0;updateQbTotal()}});
+  $$('.qb-svc-qty',b).forEach(i=>i.oninput=()=>{const s=Q.services.find(x=>x.k===i.dataset.s);if(s){s.qty=Math.max(1,parseInt(i.value)||1);updateQbTotal()}});
+  $$('.qb-svc-inc',b).forEach(btn=>btn.onclick=()=>{const s=Q.services.find(x=>x.k===btn.dataset.s);if(s){s.included=!s.included;renderQuote()}});
   const di=$('#q-disc',b);if(di)di.oninput=()=>{Q.discount=Math.max(0,parseFloat(di.value)||0);updateQbTotal()};
+  $$('#q-vat button',b).forEach(btn=>btn.onclick=()=>{Q.vat_included=btn.dataset.v==='1';renderQuote()});
   $$('#q-valid button',b).forEach(btn=>btn.onclick=()=>{Q.validity_days=+btn.dataset.d;renderQuote()});
   // step 4
   $('#qb-send',b)&&($('#qb-send',b).onclick=sendQuoteWA);
@@ -1048,16 +1106,19 @@ function wireQuote(){
 function updateQbTotal(){
   const b=document.getElementById('quote-builder');if(!b)return;
   const t=quoteTotals();const tot=$('.qb-total b',b);if(tot)tot.innerHTML=money(t.total);
-  const sub=$('.qb-total .sub',b);if(sub)sub.textContent=`${t.g} סועדים · ₪${Math.round(Q.per_person||0).toLocaleString('he-IL')}/אדם`;
+  const sub=$('.qb-total .sub',b);if(sub)sub.textContent=`${t.g} מבוגרים${t.k?` + ${t.k} ילדים`:''} · כולל מע״מ`;
 }
 
 async function saveQuote(extra){
   const t=quoteTotals();
   const row=Object.assign({
     lead_id:Q.lead_id,client_name:Q.client_name||null,event_type:Q.event_type||null,
-    event_date:Q.event_date||null,guests:Number(Q.guests)||null,track:Q.track,package:Q.package,
-    per_person:Number(Q.per_person)||null,dishes:Q.dishes||[],upgrades:Q.upgrades||[],
-    custom_lines:Q.custom_lines||[],discount:Number(Q.discount)||0,total:t.total,
+    event_date:Q.event_date||null,event_hours:Q.event_hours||null,
+    guests:Number(Q.guests)||null,kids_count:Number(Q.kids_count)||0,price_per_child:Number(Q.price_per_child)||0,
+    track:Q.track,package:Q.package,per_person:Number(Q.per_person)||null,
+    dishes:Q.dishes||[],upgrades:Q.upgrades||[],services:Q.services||[],
+    custom_lines:Q.custom_lines||[],discount:Number(Q.discount)||0,
+    vat_included:!!Q.vat_included,subtotal:t.pre,vat_amount:t.vat,total:t.total,
     validity_date:quoteValidityDate(),notes:Q.notes||null,created_by:actDraft.actor||null,
     updated_at:new Date().toISOString()
   },extra||{});
@@ -1125,9 +1186,17 @@ async function seedCatalog(){
     for(const c of ['starter','rawbar','main','dessert'])(DEFAULT_DISHES[tr][c]||[]).forEach((d,i)=>rows.push({type:'dish',track:tr,course:c,name:d[0],description:d[1],sort:i}));
   }
   DEFAULT_UPGRADES.forEach((u,i)=>rows.push({type:'upgrade',key:u.k,name:u.l,per_person:u.pp,sort:i}));
+  DEFAULT_SERVICES.forEach((s,i)=>rows.push({type:'service',key:s.k,name:s.l,per_person:s.price,sort:i}));
   const {error}=await sb.from('crm_catalog').insert(rows);
   if(error){showToast('זריעה נכשלה: '+error.message);return}
   showToast('הקטלוג אותחל ✓');openCatalogAdmin();
+}
+// זריעת שירותים בלבד — למי שכבר אתחל קטלוג לפני שהשירותים נוספו
+async function seedServices(){
+  const rows=DEFAULT_SERVICES.map((s,i)=>({type:'service',key:s.k,name:s.l,per_person:s.price,sort:i}));
+  const {error}=await sb.from('crm_catalog').insert(rows);
+  if(error){showToast('זריעה נכשלה: '+error.message);return}
+  showToast('שירותים נוספו ✓');openCatalogAdmin();
 }
 async function catUpdate(id,patch){
   const {error}=await sb.from('crm_catalog').update(Object.assign({updated_at:new Date().toISOString()},patch)).eq('id',id);
@@ -1156,6 +1225,13 @@ function catBody(){
       ${rows.map(r=>`<div class="ca-row"><input class="ca-txt" data-id="${r.id}" data-f="name" value="${esc(r.name)}"><div class="ca-pp">₪<input class="ca-num" data-id="${r.id}" data-f="per_person" type="number" inputmode="numeric" value="${r.per_person||0}"></div><button class="ca-del" data-id="${r.id}">🗑</button></div>`).join('')}
       <button class="qb-addline" id="ca-add-up">+ הוסף שדרוג</button></div>`;
   }
+  if(CAT.tab==='service'){
+    const rows=CATALOG_ROWS.filter(r=>r.type==='service').sort((a,b)=>a.sort-b.sort);
+    if(!rows.length)return `<div class="ca-seed" style="padding:36px 12px"><div style="font-size:40px">🎉</div><p>עדיין אין שירותים בקטלוג.<br>הוסף את שירותי ברירת המחדל (דיג׳יי, תאורה, ניקיון...) וערוך מחירים.</p><button class="quote-cta" id="ca-seed-svc" style="max-width:280px;margin:0 auto">הוסף שירותי ברירת מחדל</button></div>`;
+    return `<div class="ca-group"><div class="ca-gh">שירותים · מחיר קבוע ליחידה</div>
+      ${rows.map(r=>`<div class="ca-row"><input class="ca-txt" data-id="${r.id}" data-f="name" value="${esc(r.name)}"><div class="ca-pp">₪<input class="ca-num" data-id="${r.id}" data-f="per_person" type="number" inputmode="numeric" value="${r.per_person||0}"></div><button class="ca-del" data-id="${r.id}">🗑</button></div>`).join('')}
+      <button class="qb-addline" id="ca-add-svc">+ הוסף שירות</button></div>`;
+  }
   return `<div class="qb-seg" id="ca-track">${TRACKS.map(t=>`<button data-k="${t.k}" class="${t.k===CAT.track?'on':''}">${t.ico} ${t.l}</button>`).join('')}</div>
     <div class="qb-seg" id="ca-course" style="margin-top:8px">${COURSES.map(c=>`<button data-k="${c.k}" class="${c.k===CAT.course?'on':''}">${c.l}</button>`).join('')}</div>
     <div class="ca-group" style="margin-top:12px">
@@ -1170,7 +1246,7 @@ function catBody(){
 function renderCatalogAdmin(){
   const b=document.getElementById('catalog-admin');if(!b)return;
   const empty=!CATALOG_ROWS||!CATALOG_ROWS.length;
-  const tabs=[['package','חבילות'],['dish','מנות'],['upgrade','שדרוגים']];
+  const tabs=[['package','חבילות'],['dish','מנות'],['service','שירותים'],['upgrade','שדרוגים']];
   b.innerHTML=`
     <div class="qb-head">
       <button class="qb-x" id="ca-x">✕</button>
@@ -1195,12 +1271,14 @@ function wireCatalogAdmin(empty){
   $$('#ca-course button',b).forEach(btn=>btn.onclick=()=>{CAT.course=btn.dataset.k;renderCatalogAdmin()});
   const ad=$('#ca-add-dish',b);if(ad)ad.onclick=()=>catAdd({type:'dish',track:CAT.track,course:CAT.course,name:'מנה חדשה',description:'',sort:99,active:true});
   const au=$('#ca-add-up',b);if(au)au.onclick=()=>catAdd({type:'upgrade',key:'u'+Date.now(),name:'שדרוג חדש',per_person:0,sort:99,active:true});
+  const as=$('#ca-add-svc',b);if(as)as.onclick=()=>catAdd({type:'service',key:'s'+Date.now(),name:'שירות חדש',per_person:0,sort:99,active:true});
+  const ss=$('#ca-seed-svc',b);if(ss)ss.onclick=seedServices;
 }
 
-// ===== Contacts directory (data bank) =====
+// ===== Contacts directory (data bank) — אנשי קשר עם שם בלבד =====
 function contactsList(){
   const seen=new Set(),list=[];
-  LEADS.filter(l=>l.phone).forEach(l=>{const k=l.phone.replace(/\D/g,'');if(!k||seen.has(k))return;seen.add(k);list.push(l)});
+  LEADS.filter(l=>l.phone&&(l.full_name||'').trim()).forEach(l=>{const k=l.phone.replace(/\D/g,'');if(!k||seen.has(k))return;seen.add(k);list.push(l)});
   return list.sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'','he'));
 }
 function contactRows(list,ql){
