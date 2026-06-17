@@ -477,6 +477,14 @@
   .att-empty{text-align:center;color:var(--muted);padding:60px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:18px;font-weight:600}
   .att-empty-sub{font-size:13px;font-weight:400;color:var(--muted-2)}
 
+  /* ===== Contacts directory ===== */
+  .ct-title{flex:1;font-family:'Frank Ruhl Libre',serif;font-size:16px;color:var(--gold-2);font-weight:700;text-align:center}
+  .ct-list{display:flex;flex-direction:column;gap:7px;max-width:640px;margin:0 auto}
+  .ct-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .ct-name{font-size:15px;font-weight:700}
+  .ct-phone{font-size:13px;color:var(--muted);margin-top:2px}
+  .ct-acts{display:flex;gap:7px;flex-shrink:0}
+
   .qb{position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;
     opacity:0;transform:translateY(14px);transition:opacity .22s,transform .22s;overscroll-behavior:contain}
   .qb.open{opacity:1;transform:none}
@@ -880,6 +888,8 @@ function isCold(l){
   return leadStale(l)>COLD_DAYS;
 }
 const coldChip=l=>isCold(l)?`<span class="chip cold">❄️ קר</span>`:'';
+// אירוע שעבר — תאריך האירוע מאחורינו. מוסתר כברירת מחדל, נגיש בפילטר "עבר".
+const isPast=l=>{const d=daysUntil(l.event_date);return d!=null&&d<0};
 const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
@@ -1184,6 +1194,42 @@ function wireCatalogAdmin(empty){
   const au=$('#ca-add-up',b);if(au)au.onclick=()=>catAdd({type:'upgrade',key:'u'+Date.now(),name:'שדרוג חדש',per_person:0,sort:99,active:true});
 }
 
+// ===== Contacts directory (data bank) =====
+function contactsList(){
+  const seen=new Set(),list=[];
+  LEADS.filter(l=>l.phone).forEach(l=>{const k=l.phone.replace(/\D/g,'');if(!k||seen.has(k))return;seen.add(k);list.push(l)});
+  return list.sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'','he'));
+}
+function contactRows(list,ql){
+  const shown=ql?list.filter(l=>[l.full_name,l.phone].filter(Boolean).join(' ').toLowerCase().includes(ql)):list;
+  if(!shown.length)return '<div class="att-empty" style="padding:40px 0">לא נמצאו אנשי קשר</div>';
+  return shown.map(l=>{const wa=waLink(l.phone);return `<div class="ct-row">
+    <div class="ct-info"><div class="ct-name">${esc(l.full_name)||'—'}</div><div class="ct-phone" dir="ltr">${esc(l.phone)}</div></div>
+    <div class="ct-acts">${wa?`<a class="att-btn wa" href="${wa}" target="_blank">💬</a>`:''}<a class="att-btn" href="tel:${esc(l.phone)}">📞</a></div>
+  </div>`}).join('');
+}
+function openContacts(){
+  if(!document.getElementById('contacts-page')){const b=document.createElement('div');b.id='contacts-page';b.className='qb';document.body.appendChild(b)}
+  const b=document.getElementById('contacts-page');
+  const list=contactsList();
+  b.innerHTML=`<div class="qb-head"><button class="qb-x" id="ct-x">✕</button>
+    <div class="ct-title">📇 אנשי קשר · ${list.length}</div>
+    <button class="pill" id="ct-export">⬇ CSV</button></div>
+    <div class="qb-body"><input class="qb-in" id="ct-search" placeholder="חיפוש לפי שם או טלפון..." style="margin-bottom:12px">
+      <div class="ct-list" id="ct-list">${contactRows(list,'')}</div></div>`;
+  $('#ct-x',b).onclick=()=>{b.classList.remove('open');setTimeout(()=>b.remove(),250)};
+  $('#ct-search',b).oninput=e=>{$('#ct-list',b).innerHTML=contactRows(list,e.target.value.trim().toLowerCase())};
+  $('#ct-export',b).onclick=()=>exportContacts(list);
+  setTimeout(()=>b.classList.add('open'),10);
+}
+function exportContacts(list){
+  const esc2=v=>{const s=String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const csv=[['שם','טלפון'],...list.map(l=>[l.full_name||'',l.phone||''])].map(r=>r.map(esc2).join(',')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`אנשי_קשר_פסאו_${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  showToast(`יוצאו ${list.length} אנשי קשר`);
+}
+
 // ===== Auth =====
 async function init(){
   const {data}=await sb.auth.getSession();
@@ -1232,6 +1278,7 @@ function renderShell(){
     <div class="brand">${LOGO_SVG_SMALL}<span class="sub">ניהול לידים</span></div>
     <div class="header-r">
       <button class="add-lead-btn" id="add-lead-btn">+ ליד חדש</button>
+      <button class="pill" id="contacts-btn" title="אנשי קשר">📇 קשר</button>
       <button class="pill" id="catalog-btn" title="ניהול תפריט">🍽 תפריט</button>
       <button class="pill" id="export-btn" title="ייצוא לאקסל">⬇ Excel</button>
       <div class="live"><span class="pulse"></span>עדכון חי</div>
@@ -1260,6 +1307,7 @@ function renderShell(){
   $('#logout').onclick=async()=>{await sb.auth.signOut();renderLogin()};
   $('#export-btn').onclick=exportExcel;
   $('#catalog-btn').onclick=openCatalogAdmin;
+  $('#contacts-btn').onclick=openContacts;
   $('#add-lead-btn').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#fab-add').onclick=()=>{showAddModal=true;drawAddModal()};
   $('#q').oninput=e=>{search=e.target.value.trim().toLowerCase();draw()};
@@ -1424,6 +1472,7 @@ function filtered(){
       else if(filters.assigned!=='__none'&&l.assigned_to!==filters.assigned)return false;
     }
     if(!inTimeframe(l))return false;
+    if(filters.timeframe!=='past'&&isPast(l))return false; // הסתר אירועים שעברו (זמינים בפילטר "עבר")
     if(search){
       const h=[l.full_name,l.phone,l.email,l.event_type,l.notes,l.event_date_raw,l.hostess].filter(Boolean).join(' ').toLowerCase();
       if(!h.includes(search))return false;
@@ -1469,8 +1518,8 @@ function drawStats(){
     if(l.relevance==='irrelevant')return false;
     return true;
   });
-  const active=base.filter(l=>!['won','lost'].includes(l.status)&&!isCold(l)).length;
-  const cold=base.filter(isCold).length;
+  const active=base.filter(l=>!['won','lost'].includes(l.status)&&!isCold(l)&&!isPast(l)).length;
+  const cold=base.filter(l=>isCold(l)&&!isPast(l)).length;
   const week=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=7}).length;
   const month=base.filter(l=>{const n=daysUntil(l.event_date);return n!=null&&n>=0&&n<=30}).length;
   const won=base.filter(l=>l.status==='won').length;
@@ -1506,7 +1555,7 @@ function draw(){
 function attentionInfo(l){
   if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return null;
   if(ACCEPTED_LEADS.has(l.id))return null;
-  if(isCold(l))return null; // קר — כבר ירד מהמעקב הפעיל
+  if(isCold(l)||isPast(l))return null; // קר או אירוע שעבר — ירד מהמעקב הפעיל
   if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return null; // נדחה (snooze)
   const since=Math.max(0,Math.floor((Date.now()-new Date(l.updated_at).getTime())/864e5));
   const dU=l.event_date?daysUntil(l.event_date):null;
