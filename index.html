@@ -446,6 +446,7 @@
   .quote-badge.sent{background:rgba(74,144,217,.18);color:#7fb4e8}
   .quote-badge.accepted{background:rgba(46,204,113,.18);color:#5fd896}
   .quote-link{background:transparent;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
+  .chip.accepted-q{background:rgba(46,204,113,.18);color:#5fd896;font-weight:700}
 
   .qb{position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;
     opacity:0;transform:translateY(14px);transition:opacity .22s,transform .22s;overscroll-behavior:contain}
@@ -835,6 +836,12 @@ async function addActivity(leadId,kind,body,actor){
 
 // ===== Quote builder =====
 let Q=null; // current quote draft
+let ACCEPTED_LEADS=new Set(); // lead ids that have an accepted quote
+async function loadAcceptedQuotes(){
+  const {data}=await sb.from('crm_quotes').select('lead_id').eq('status','accepted');
+  ACCEPTED_LEADS=new Set((data||[]).map(q=>q.lead_id).filter(Boolean));
+}
+const acceptedChip=l=>ACCEPTED_LEADS.has(l.id)?`<span class="chip accepted-q">✓ הצעה אושרה</span>`:'';
 const QSTAT={draft:'טיוטה',sent:'נשלחה',accepted:'אושרה'};
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const pkgOf=(track,key)=>(PACKAGES[track]||[]).find(p=>p.k===key)||PACKAGES[track][0];
@@ -1147,9 +1154,19 @@ async function init(){
   renderShell();
   await loadCatalog();
   await loadLeads();
+  await loadAcceptedQuotes();
+  draw();
   sb.channel('crm-leads').on('postgres_changes',{event:'*',schema:'public',table:'crm_leads'},()=>loadLeads()).subscribe();
   sb.channel('crm-acts').on('postgres_changes',{event:'*',schema:'public',table:'crm_activities'},p=>{
     if(openLeadId&&p.new&&p.new.lead_id===openLeadId)loadActs(openLeadId);
+  }).subscribe();
+  sb.channel('crm-quotes').on('postgres_changes',{event:'*',schema:'public',table:'crm_quotes'},p=>{
+    const r=p.new;if(!r||r.status!=='accepted')return;
+    const isNew=!ACCEPTED_LEADS.has(r.lead_id);
+    ACCEPTED_LEADS.add(r.lead_id);
+    if(isNew)showToast(`🎉 ${r.client_name||'לקוח'} אישר הצעת מחיר!`);
+    if(openLeadId===r.lead_id){loadActs(r.lead_id);renderQuoteList(r.lead_id)}
+    draw();
   }).subscribe();
 }
 function renderLogin(){
@@ -1498,6 +1515,7 @@ function cardHTML(l){
     <div class="footer">
       <div class="badges">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${acceptedChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.hostess?`<span class="chip hostess">📞 ${esc(l.hostess)}</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
@@ -1648,6 +1666,7 @@ function mobCardHTML(l){
     <div class="mob-card-foot">
       <div class="mob-card-meta">
         <span class="chip src-${l.source}">${SRC_LABEL[l.source]||l.source}</span>
+        ${acceptedChip(l)}
         ${l.duplicate_of?`<span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a">🔁 כפול</span>`:''}
         ${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}
         ${l.relevance&&l.relevance!=='unknown'?`<span class="rel-pill ${rel.cls}">${rel.l}</span>`:''}

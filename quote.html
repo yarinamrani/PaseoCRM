@@ -85,6 +85,12 @@
   .sheet p{font-size:14px;color:var(--ink-2);margin-bottom:16px;line-height:1.6}
   .sheet input{width:100%;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:15px;color:var(--ink);font-size:16px;font-family:inherit;outline:none;margin-bottom:14px}
   .sheet input:focus{border-color:var(--gold)}
+  .terms div{font-size:13.5px;color:var(--ink-2);line-height:1.7;padding:3px 0}
+  .sig-wrap{position:relative;margin-bottom:8px}
+  .sig-canvas{width:100%;height:160px;background:#fff;border:1px dashed var(--gold);border-radius:12px;touch-action:none;display:block;cursor:crosshair}
+  .sig-clear{display:block;margin:0 0 14px auto;background:var(--paper-2);border:1px solid var(--line);border-radius:9px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink-2)}
+  .sig-hint{position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;font-size:13px;color:var(--ink-3);pointer-events:none}
+  .sig-show{display:block;max-width:200px;margin:12px auto 0;background:#fff;border-radius:10px;padding:8px;border:1px solid var(--line)}
   span[dir=ltr]{unicode-bidi:isolate}
 </style>
 </head>
@@ -101,6 +107,7 @@ const TRACKS={dairy:'חלבי',meat:'בשרי'};
 const PKG={classic:'CLASSIC',premium:'PREMIUM',deluxe:'DELUXE'};
 const COURSES=[['starter','מנות פתיחה'],['rawbar','Raw Bar'],['main','מנות עיקריות'],['dessert','קינוחים']];
 const UP_DESC={wine:'יין ובירה חופשי',open:'בר אלכוהול חופשי',cocktail:'תוספת בר קוקטיילים',sushi:'עמדת סושי'};
+const TERMS=['לאישור והבטחת התאריך נדרשת מקדמה בסך 30% מערך ההזמנה.','היתרה תשולם עד 7 ימים לפני מועד האירוע.','ביטול עד 30 יום לפני האירוע — החזר מלא של המקדמה; בין 30 ל-14 יום — 50%; פחות מ-14 יום — המקדמה אינה מוחזרת.','המחירים אינם כוללים מע״מ וכפופים להתאמה לפי מספר הסועדים הסופי.','כמות הסועדים הסופית תימסר עד 7 ימים לפני האירוע.'];
 const money=n=>`<span dir="ltr">₪${Math.round(Number(n)||0).toLocaleString('he-IL')}</span>`;
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate=d=>d?d.split('-').reverse().join('.'):'';
@@ -168,35 +175,65 @@ function render(q){
         <div class="vat">המחירים אינם כוללים מע״מ · ייתכנו התאמות בהתאם לפרטי האירוע</div>
       </div>
 
+      <div class="card"><div class="sec-t">תנאי ההזמנה</div>
+        <div class="terms">${TERMS.map(t=>`<div>• ${esc(t)}</div>`).join('')}</div></div>
+
       <div class="valid">✦ ההצעה בתוקף עד ${fmtDate(q.validity_date)||'—'} ✦</div>
-      ${accepted?`<div class="accepted-banner">✓ ההצעה אושרה${q.accepted_name?` ע״י ${esc(q.accepted_name)}`:''} — ניצור איתכם קשר בהקדם!</div>`:''}
+      ${accepted?`<div class="accepted-banner">✓ ההזמנה אושרה ונחתמה${q.accepted_name?` ע״י ${esc(q.accepted_name)}`:''} — ניצור איתכם קשר בהקדם!${q.signature?`<img class="sig-show" src="${q.signature}" alt="חתימה">`:''}</div>`:''}
       <div class="footer">PASEO · Rooftop Lounge &amp; Dining</div>
     </div>
 
     ${accepted?'':`<div class="cta-bar"><div class="cta-inner">
-      <button class="cta-main" id="accept-btn">אישור הצעה ✓</button>
+      <button class="cta-main" id="accept-btn">אישור וחתימה ✓</button>
       <a class="cta-ghost" href="https://wa.me/${VENUE_WA}?text=${encodeURIComponent('היי, יש לי שאלה על הצעת המחיר 🌅')}" target="_blank">שאלות?</a>
     </div></div>
 
     <div class="sheet-bg" id="sheet-bg"><div class="sheet">
-      <h3>אישור הצעת מחיר</h3>
-      <p>נשמח לאשר את הפרטים — מלאו את שמכם המלא ואנחנו נמשיך מכאן 🌅</p>
+      <h3>אישור וחתימה</h3>
+      <p>מילוי השם והחתימה מאשרים את ההזמנה ואת ההסכמה לתנאים 🌅</p>
       <input id="accept-name" placeholder="שם מלא" autocomplete="name">
-      <button class="cta-main" style="width:100%" id="accept-confirm">אישור ✓</button>
+      <div class="sig-wrap">
+        <canvas id="sig" class="sig-canvas"></canvas>
+        <span class="sig-hint">חתמו כאן ✍️</span>
+      </div>
+      <button type="button" class="sig-clear" id="sig-clear">נקה חתימה</button>
+      <button class="cta-main" style="width:100%" id="accept-confirm">מאשר/ת וחותם/ת ✓</button>
     </div></div>`}`;
 
   if(!accepted){
     const bg=document.getElementById('sheet-bg');
-    document.getElementById('accept-btn').onclick=()=>{bg.classList.add('open');setTimeout(()=>document.getElementById('accept-name').focus(),100)};
+    let sig=null;
+    document.getElementById('accept-btn').onclick=()=>{bg.classList.add('open');setTimeout(()=>{sig=setupSig();document.getElementById('accept-name').focus()},60)};
     bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open')};
     document.getElementById('accept-confirm').onclick=async()=>{
       const name=document.getElementById('accept-name').value.trim();
+      if(!name){alert('נא למלא שם מלא');return}
+      if(!sig||sig.isEmpty()){alert('נא לחתום בתיבת החתימה');return}
       const btn=document.getElementById('accept-confirm');btn.textContent='שולח…';btn.disabled=true;
-      const {data,error}=await sb.rpc('crm_quote_accept',{p_token:token,p_name:name});
-      if(error||!data){btn.textContent='אישור ✓';btn.disabled=false;alert('אירעה שגיאה, נסו שוב');return}
-      q.status='accepted';q.accepted_name=name;render(q);window.scrollTo({top:0,behavior:'smooth'});
+      const sigData=sig.dataURL();
+      const {data,error}=await sb.rpc('crm_quote_accept',{p_token:token,p_name:name,p_signature:sigData,p_terms:TERMS.join('\n')});
+      if(error||!data){btn.textContent='מאשר/ת וחותם/ת ✓';btn.disabled=false;alert('אירעה שגיאה, נסו שוב');return}
+      q.status='accepted';q.accepted_name=name;q.signature=sigData;render(q);window.scrollTo({top:0,behavior:'smooth'});
     };
   }
+}
+
+// signature pad — draw with finger/mouse on a canvas
+function setupSig(){
+  const c=document.getElementById('sig');if(!c)return null;
+  const r=c.getBoundingClientRect();
+  c.width=Math.max(1,r.width)*2;c.height=Math.max(1,r.height)*2;
+  const ctx=c.getContext('2d');ctx.scale(2,2);
+  ctx.lineWidth=2.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#2b2620';
+  let drawing=false,empty=true,last=null;
+  const pos=e=>{const b=c.getBoundingClientRect();const t=e.touches&&e.touches[0]?e.touches[0]:e;return{x:t.clientX-b.left,y:t.clientY-b.top}};
+  const start=e=>{drawing=true;last=pos(e);e.preventDefault()};
+  const move=e=>{if(!drawing)return;const p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;if(empty){empty=false;const h=document.querySelector('.sig-hint');if(h)h.style.display='none'}e.preventDefault()};
+  const end=()=>{drawing=false};
+  c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+  c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',end);
+  const clr=document.getElementById('sig-clear');if(clr)clr.onclick=()=>{ctx.clearRect(0,0,c.width,c.height);empty=true};
+  return {dataURL:()=>c.toDataURL('image/png'),isEmpty:()=>empty};
 }
 load();
 </script>
