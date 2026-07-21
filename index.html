@@ -439,6 +439,24 @@
   .quote-cta:active{transform:scale(.98)}
   .quote-cta.alt{background:transparent;color:var(--gold-2);border:1.5px solid var(--gold-dim);box-shadow:none;margin-top:8px}
   .quote-cta.alt:active{background:var(--gold-soft)}
+  /* ===== Event Maker proposals view ===== */
+  .qv-empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.8}
+  .qv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;padding:16px}
+  @media(max-width:640px){.qv-grid{grid-template-columns:1fr;padding:10px}}
+  .qv-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .qv-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .qv-name{font-size:15px;font-weight:700;color:var(--txt)}
+  .qv-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .qv-badge.signed{background:rgba(46,204,113,.16);color:#5fd896}
+  .qv-badge.pending{background:rgba(241,196,15,.12);color:#e8ce6a}
+  .qv-meta{display:flex;flex-wrap:wrap;gap:5px;font-size:11.5px;color:var(--muted);margin-bottom:11px}
+  .qv-total{color:var(--gold-2);font-weight:700}
+  .qv-signed-at{color:#5fd896}
+  .qv-actions{display:flex;flex-wrap:wrap;gap:6px}
+  .qv-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--txt-2);border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .qv-btn:active{background:var(--panel-3)}
+  .qv-btn.edit{border-color:var(--gold-dim);color:var(--gold-2)}
+  .qv-btn.wa{border-color:rgba(37,211,102,.4);color:#5fd896}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -1202,6 +1220,7 @@ async function renderQuoteList(leadId){
   const host=document.getElementById('x-quote-list');if(!host)return;
   const {data}=await sb.from('crm_quotes').select('*').eq('lead_id',leadId).order('created_at',{ascending:false});
   if(!data||!data.length){host.innerHTML='';return}
+  const emCode=q=>{if(!q.em_link)return null;const m=q.em_link.match(/[?&]p=([A-Za-z0-9]{2,20})$/);return m?m[1]:null};
   host.innerHTML=`<div class="quote-list-l">הצעות מחיר (${data.length})</div>`+data.map(q=>{
     const isEM=!!q.em_link;
     const pk=pkgOf(q.track||'meat',q.package||'premium');
@@ -1209,12 +1228,14 @@ async function renderQuoteList(leadId){
     return `<div class="quote-row" data-id="${q.id}">
       <span class="quote-badge ${q.status}">${QSTAT[q.status]||q.status}</span>
       <span class="quote-row-main">${label}</span>
+      ${emCode(q)?`<button class="quote-link" data-edit="${q.id}" title="ערוך ב-Event Maker">✏️</button>`:''}
       ${q.signature?`<button class="quote-link" data-sig="${q.id}" title="צפה בחתימה">✍</button>`:''}
       <button class="quote-link" data-t="${q.token}" title="העתק קישור">🔗</button>
     </div>`;}).join('');
   $$('.quote-row',host).forEach(r=>r.onclick=e=>{
     const q=data.find(x=>x.id===r.dataset.id);
     const url=q.em_link||`${QUOTE_PAGE_URL}?t=${q.token}`;
+    if(e.target.closest('[data-edit]')){const c=emCode(q);if(c)window.open(`${EVENT_MAKER_URL}?edit=${c}`,'_blank');return}
     if(e.target.closest('[data-sig]')){viewSignature(q);return}
     if(e.target.closest('.quote-link')){navigator.clipboard?.writeText(url).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',url));return}
     if(q.em_link){window.open(q.em_link,'_blank');return}
@@ -1445,6 +1466,7 @@ function renderShell(){
       <button data-v="kanban" class="${view==='kanban'?'active':''}">לוח</button>
       <button data-v="table" class="${view==='table'?'active':''}">טבלה</button>
       <button data-v="calendar" class="${view==='calendar'?'active':''}">יומן</button>
+      <button data-v="quotes" class="${view==='quotes'?'active':''}">🧾 הצעות</button>
       <button data-v="dashboard" class="${view==='dashboard'?'active':''}">דוחות</button>
     </div>
   </div>
@@ -1694,7 +1716,61 @@ function draw(){
     else drawTable();
   }
   else if(view==='dashboard')drawDashboard();
+  else if(view==='quotes')drawQuotesView();
   else drawCalendar();
+}
+
+// ===== Event Maker proposals view (shared `proposals` table) =====
+let EM_PROPOSALS=null;
+async function loadEmProposals(){
+  const {data,error}=await sb.from('proposals').select('*').order('createdAt',{ascending:false});
+  if(error){console.error('proposals',error);EM_PROPOSALS=[];return}
+  EM_PROPOSALS=data||[];
+}
+async function drawQuotesView(){
+  const el=$('#main');
+  el.innerHTML='<div class="qv-empty">טוען הצעות...</div>';
+  await loadEmProposals();
+  if(view!=='quotes')return;
+  let rows=EM_PROPOSALS;
+  if(search)rows=rows.filter(p=>{const d=p.data||{};return (d.n||'').toLowerCase().includes(search)||(d.t||'').toLowerCase().includes(search)||p.id.toLowerCase().includes(search)});
+  if(!rows.length){el.innerHTML='<div class="qv-empty">אין הצעות עדיין.<br>הצעות שנוצרות ב-Event Maker מופיעות כאן אוטומטית.</div>';return}
+  el.innerHTML=`<div class="qv-grid">${rows.map(p=>{
+    const d=p.data||{};
+    const signed=!!d.sig;
+    const total=(Number(d.g)||0)*(Number(d.ppg)||0)+(Number(d.c)||0)*(Number(d.ppc)||0);
+    return `<div class="qv-card" data-id="${esc(p.id)}">
+      <div class="qv-top">
+        <div class="qv-name">${esc(d.n)||p.id}</div>
+        <span class="qv-badge ${signed?'signed':'pending'}">${signed?'✓ חתום':'ממתין לחתימה'}</span>
+      </div>
+      <div class="qv-meta">
+        ${d.t?`<span>${esc(d.t)}</span>`:''}
+        ${d.d?`<span>· ${fmtDate(d.d)}</span>`:''}
+        ${d.g?`<span>· ${esc(String(d.g))} אורחים${d.c?` + ${esc(String(d.c))} ילדים`:''}</span>`:''}
+        ${d.ppg?`<span>· ${esc(String(d.ppg))} ₪ לסועד</span>`:''}
+        ${total?`<span class="qv-total">· ${money(total)}</span>`:''}
+        ${signed&&d.sigDate?`<span class="qv-signed-at">· נחתם ${esc(d.sigDate)}</span>`:''}
+      </div>
+      <div class="qv-actions">
+        <button class="qv-btn edit" data-act="edit">✏️ ערוך</button>
+        <button class="qv-btn" data-act="view">👁 צפה</button>
+        <button class="qv-btn" data-act="copy">🔗 העתק קישור</button>
+        <button class="qv-btn wa" data-act="wa">💬 שלח</button>
+      </div>
+    </div>`}).join('')}</div>`;
+  $$('.qv-card',el).forEach(card=>{
+    const id=card.dataset.id;
+    const p=EM_PROPOSALS.find(x=>x.id===id);const d=(p&&p.data)||{};
+    const link=`${EVENT_MAKER_URL}?p=${id}`;
+    card.querySelector('[data-act="edit"]').onclick=()=>window.open(`${EVENT_MAKER_URL}?edit=${id}`,'_blank');
+    card.querySelector('[data-act="view"]').onclick=()=>window.open(link,'_blank');
+    card.querySelector('[data-act="copy"]').onclick=()=>{navigator.clipboard?.writeText(link).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',link))};
+    card.querySelector('[data-act="wa"]').onclick=()=>{
+      const msg=`שלום ${d.n||''},\nהצעת המחיר שלכם מפסאו:\n${link}`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,'_blank');
+    };
+  });
 }
 
 // ===== Needs-attention triage (מקובץ לסקציות — לידים חדשים לא נקברים) =====
