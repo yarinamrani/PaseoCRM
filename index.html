@@ -437,6 +437,8 @@
     border-radius:11px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;
     box-shadow:0 4px 16px rgba(201,162,39,.28);transition:transform .12s}
   .quote-cta:active{transform:scale(.98)}
+  .quote-cta.alt{background:transparent;color:var(--gold-2);border:1.5px solid var(--gold-dim);box-shadow:none;margin-top:8px}
+  .quote-cta.alt:active{background:var(--gold-soft)}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -826,6 +828,22 @@ function sendMenu(kind,lead){
   window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(WA_OPENING_MSG)}`}
+// ===== Event Maker integration (paseo-event-maker.vercel.app) =====
+// פותח את מחולל ההצעות הממותג (PDF + פונטים) עם פרטי הליד ממולאים מראש דרך פרמטר ?load=
+const EVENT_MAKER_URL='https://paseo-event-maker.vercel.app/';
+function openEventMaker(lead){
+  const guests=lead.guests_max||lead.guests_min||(lead.guests_raw?parseInt(lead.guests_raw):null);
+  const data={
+    n:lead.full_name||'',
+    t:lead.event_type||undefined,
+    d:lead.event_date||undefined,
+    tm:lead.event_time||undefined,
+    g:guests?String(guests):undefined,
+  };
+  Object.keys(data).forEach(k=>data[k]===undefined&&delete data[k]);
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  window.open(`${EVENT_MAKER_URL}?load=${encodeURIComponent(b64)}`,'_blank');
+}
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
 // ===== Data =====
@@ -2133,6 +2151,7 @@ function drawDetail(){
       <!-- Quote builder -->
       <div class="menu-actions">
         <button class="quote-cta" id="x-quote">🧾 צור הצעת מחיר</button>
+        <button class="quote-cta alt" id="x-em-quote">📄 הצעת מחיר מעוצבת (Event Maker)</button>
         <div id="x-quote-list"></div>
       </div>
 
@@ -2238,6 +2257,7 @@ function drawDetail(){
   const md=$('#x-menu-dairy',el);if(md)md.onclick=()=>sendMenu('dairy',l);
   const mm=$('#x-menu-meat',el);if(mm)mm.onclick=()=>sendMenu('meat',l);
   $('#x-quote',el).onclick=()=>openQuote(l);
+  $('#x-em-quote',el).onclick=()=>openEventMaker(l);
   renderQuoteList(l.id);
 
   // Status
