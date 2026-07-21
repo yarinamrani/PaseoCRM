@@ -839,11 +839,32 @@ function openEventMaker(lead){
     d:lead.event_date||undefined,
     tm:lead.event_time||undefined,
     g:guests?String(guests):undefined,
+    crm:{lead:lead.id}, // כדי שה-Event Maker ידווח חזרה כשנוצרת הצעה
   };
   Object.keys(data).forEach(k=>data[k]===undefined&&delete data[k]);
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   window.open(`${EVENT_MAKER_URL}?load=${encodeURIComponent(b64)}`,'_blank');
 }
+// כשנוצרת הצעה ב-Event Maker (בטאב שנפתח מכאן) — נרשמת אוטומטית על הליד
+window.addEventListener('message',async e=>{
+  const d=e.data;
+  if(!d||d.type!=='paseo-em-proposal'||!d.leadId)return;
+  if(e.origin!=='https://paseo-event-maker.vercel.app')return;
+  const row={
+    lead_id:d.leadId,client_name:d.clientName||null,event_type:d.eventType||null,
+    event_date:d.eventDate||null,guests:Number(d.guests)||null,
+    total:Number(d.total)||null,em_link:d.link||null,
+    status:'sent',sent_at:new Date().toISOString(),
+    notes:'נוצרה ב-Event Maker',created_by:'Event Maker',updated_at:new Date().toISOString(),
+  };
+  const {error}=await sb.from('crm_quotes').insert(row);
+  if(error){console.error('em quote save',error);showToast('שגיאה ברישום הצעת Event Maker');return}
+  sb.from('crm_activities').insert({lead_id:d.leadId,kind:'note',body:`📤 נוצרה הצעת מחיר ב-Event Maker · ₪${Math.round(Number(d.total)||0).toLocaleString('he-IL')} · ${d.link||''}`,actor:'מערכת'});
+  const lead=LEADS.find(x=>x.id===d.leadId);
+  if(lead&&!['won','lost'].includes(lead.status))await updateLead(d.leadId,{status:'offer_sent',updated_at:new Date().toISOString()});
+  if(openLeadId===d.leadId){loadActs(d.leadId);renderQuoteList(d.leadId)}
+  showToast('הצעת Event Maker נרשמה על הליד ✓');
+});
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
 // ===== Data =====
@@ -1182,17 +1203,21 @@ async function renderQuoteList(leadId){
   const {data}=await sb.from('crm_quotes').select('*').eq('lead_id',leadId).order('created_at',{ascending:false});
   if(!data||!data.length){host.innerHTML='';return}
   host.innerHTML=`<div class="quote-list-l">הצעות מחיר (${data.length})</div>`+data.map(q=>{
+    const isEM=!!q.em_link;
     const pk=pkgOf(q.track||'meat',q.package||'premium');
+    const label=isEM?`📄 Event Maker · ${money(q.total||0)}`:`${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}`;
     return `<div class="quote-row" data-id="${q.id}">
       <span class="quote-badge ${q.status}">${QSTAT[q.status]||q.status}</span>
-      <span class="quote-row-main">${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}</span>
+      <span class="quote-row-main">${label}</span>
       ${q.signature?`<button class="quote-link" data-sig="${q.id}" title="צפה בחתימה">✍</button>`:''}
       <button class="quote-link" data-t="${q.token}" title="העתק קישור">🔗</button>
     </div>`;}).join('');
   $$('.quote-row',host).forEach(r=>r.onclick=e=>{
     const q=data.find(x=>x.id===r.dataset.id);
+    const url=q.em_link||`${QUOTE_PAGE_URL}?t=${q.token}`;
     if(e.target.closest('[data-sig]')){viewSignature(q);return}
-    if(e.target.closest('.quote-link')){const url=`${QUOTE_PAGE_URL}?t=${q.token}`;navigator.clipboard?.writeText(url).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',url));return}
+    if(e.target.closest('.quote-link')){navigator.clipboard?.writeText(url).then(()=>showToast('הקישור הועתק')).catch(()=>prompt('קישור:',url));return}
+    if(q.em_link){window.open(q.em_link,'_blank');return}
     const lead=LEADS.find(x=>x.id===leadId)||{id:leadId,full_name:q.client_name,phone:''};
     openQuote(lead,q);
   });
