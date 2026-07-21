@@ -457,6 +457,7 @@
   .qv-btn:active{background:var(--panel-3)}
   .qv-btn.edit{border-color:var(--gold-dim);color:var(--gold-2)}
   .qv-btn.wa{border-color:rgba(37,211,102,.4);color:#5fd896}
+  .qv-btn.del{border-color:rgba(231,76,60,.35);color:#f08a7e;margin-inline-start:auto}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -1757,6 +1758,7 @@ async function drawQuotesView(){
         <button class="qv-btn" data-act="view">👁 צפה</button>
         <button class="qv-btn" data-act="copy">🔗 העתק קישור</button>
         <button class="qv-btn wa" data-act="wa">💬 שלח</button>
+        <button class="qv-btn del" data-act="del">🗑 מחק</button>
       </div>
     </div>`}).join('')}</div>`;
   $$('.qv-card',el).forEach(card=>{
@@ -1769,6 +1771,13 @@ async function drawQuotesView(){
     card.querySelector('[data-act="wa"]').onclick=()=>{
       const msg=`שלום ${d.n||''},\nהצעת המחיר שלכם מפסאו:\n${link}`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`,'_blank');
+    };
+    card.querySelector('[data-act="del"]').onclick=async()=>{
+      if(!confirm(`למחוק את ההצעה של "${d.n||id}"? הקישור אצל הלקוח יפסיק לעבוד. הפעולה אינה הפיכה.`))return;
+      const {error}=await sb.from('proposals').delete().eq('id',id);
+      if(error){showToast('מחיקה נכשלה: '+error.message);return}
+      showToast('ההצעה נמחקה');
+      drawQuotesView();
     };
   });
 }
