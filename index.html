@@ -471,6 +471,16 @@
   .chk-auto{font-size:10px;color:#7fb4e8;border:1px solid rgba(74,144,217,.35);border-radius:99px;padding:2px 7px;white-space:nowrap}
   .chk-meta{font-size:10px;color:var(--muted);white-space:nowrap}
   .chk-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .beo-modal{max-width:560px;max-height:88vh;display:flex;flex-direction:column}
+  .beo-body{overflow-y:auto;padding:4px 2px;flex:1}
+  .beo-sec{font-size:12px;font-weight:800;color:var(--gold-2);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  .beo-sec:first-child{margin-top:0}
+  .beo-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .beo-row label{width:130px;flex-shrink:0;font-size:12px;color:var(--muted)}
+  .beo-in{flex:1;width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font-size:13px;font-family:inherit}
+  .beo-in:focus{outline:none;border-color:var(--gold-dim)}
+  textarea.beo-in{resize:vertical;margin-bottom:6px}
+  .beo-foot{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -1758,29 +1768,93 @@ async function saveChecklist(leadId,chk){
   const {error}=await sb.from('proposals').upsert([{id:'chk_'+leadId,data:chk}],{onConflict:'id'});
   if(error){console.error('checklist',error);showToast('שמירת צ׳ק ליסט נכשלה')}
 }
-// מסמך אירוע (BEO) — נבנה מהליד + ההצעה העדכנית
-function eventDocText(l,q){
-  const L=[];
-  L.push('📋 *מסמך אירוע — PASEO*','');
-  L.push(`לקוח: ${l.full_name||''}${l.phone?' · '+l.phone:''}`);
-  if(l.event_type)L.push(`אירוע: ${l.event_type}`);
-  if(l.event_date)L.push(`תאריך: ${fmtDate(l.event_date)}${dayOfWeek(l.event_date)?' (יום '+dayOfWeek(l.event_date)+')':''}`);
-  const hrs=(q&&q.event_hours)||l.event_time;
-  if(hrs)L.push(`שעות: ${hrs}`);
-  const g=(q&&q.guests)||l.guests_raw;const kd=q&&q.kids_count;
-  if(g)L.push(`אורחים: ${g}${kd?` + ${kd} ילדים`:''}`);
-  if(q){
-    if(q.track&&q.package)L.push(`חבילה: ${TRACKS.find(t=>t.k===q.track)?.l||q.track} ${pkgOf(q.track,q.package).l} · ₪${q.per_person||''} לאורח`);
-    if(q.dishes&&q.dishes.length){L.push('','*תפריט:*');COURSES.forEach(c=>{const ds=q.dishes.filter(d=>d.course===c.k);if(ds.length)L.push(`${c.l}: ${ds.map(d=>d.name).join(', ')}`)});}
-    if(q.kids_menu)L.push(`תפריט ילדים: ${q.kids_menu}`);
-    if(q.upgrades&&q.upgrades.length)L.push(`שדרוגים: ${q.upgrades.map(u=>u.l||u.name||'').filter(Boolean).join(', ')}`);
-    if(q.services&&q.services.length)L.push(`שירותים: ${q.services.map(s=>s.l||s.name||'').filter(Boolean).join(', ')}`);
-    if(q.total)L.push('',`סה״כ: ₪${Math.round(Number(q.total)).toLocaleString('he-IL')}`);
-    if(q.em_link)L.push(`קישור הצעה: ${q.em_link}`);
-    if(q.notes)L.push('',`הערות הצעה: ${q.notes}`);
+// ===== דף הפקה (BEO) — הפורמט הרשמי של ניהול אירועים פסאו =====
+const BEO_FIELDS=[
+  {sec:'פרטי אירוע',fields:[
+    {k:'type',l:'סוג אירוע'},{k:'name',l:'שם'},{k:'date',l:'תאריך',type:'date'},{k:'start',l:'שעת התחלה'},
+    {k:'guests',l:'כמות מוזמנים'},{k:'location',l:'מיקום/חלל',ph:'חלל מקורה / מרפסת / כל המתחם'},{k:'contact',l:'איש קשר'},
+  ]},
+  {sec:'מנהל מטבח / מנהל בר',fields:[
+    {k:'food_menu',l:'תפריט סגור אוכל'},{k:'drinks_menu',l:'תפריט סגור משקאות',ph:'בירות + יין / אלכוהול מלא'},{k:'dj',l:'דיג׳יי',ph:'של המקום / חיצוני'},
+  ]},
+  {sec:'צוות',fields:[
+    {k:'waiters',l:'מלצרים',ph:'סידור כרגיל, מותאם לאירוע בשיפט'},{k:'bartenders',l:'ברמנים',ph:'סידור כרגיל מותאם לפי שיפט'},{k:'hostess',l:'מארחת',ph:'2 מארחות'},
+  ]},
+  {sec:'טכני',fields:[
+    {k:'sketch',l:'סקיצה',ph:'מספרי שולחנות'},{k:'design',l:'עיצוב',ph:'של המקום'},{k:'tech_notes',l:'הערות כללי'},
+  ]},
+  {sec:'עלויות',fields:[
+    {k:'per_adult',l:'מחיר לאדם (₪)'},{k:'per_child',l:'מחיר ילדים (₪)'},{k:'extras',l:'תוספות'},
+  ]},
+  {sec:'לו״ז אירוע',fields:[{k:'schedule',l:'',type:'textarea',ph:'18:20 — ראשונות + סלטים\n19:00 — עיקריות\n20:00 — קינוחים'}]},
+  {sec:'תפריט',fields:[{k:'menu',l:'',type:'textarea'}]},
+];
+function beoDefaults(l,q){
+  const menuLines=[];
+  if(q&&q.dishes&&q.dishes.length){
+    COURSES.forEach(c=>{const ds=q.dishes.filter(d=>d.course===c.k);if(ds.length)menuLines.push(`${c.l}: ${ds.map(d=>d.name).join(', ')}`)});
+    if(q.kids_menu)menuLines.push(`תפריט ילדים: ${q.kids_menu}`);
   }
-  if(l.notes)L.push('',`הערות פנימיות: ${l.notes}`);
+  const g=(q&&q.guests)||l.guests_raw||'';const kd=(q&&q.kids_count)||0;
+  return {
+    type:l.event_type||'',name:l.full_name||'',date:l.event_date||'',start:(q&&q.event_hours)||l.event_time||'',
+    guests:g?`${g}${kd?` + ${kd} ילדים`:''}`:'',location:'',contact:`${l.full_name||''}${l.phone?' · '+l.phone:''}`,
+    food_menu:q&&q.track?`תפריט ${TRACKS.find(t=>t.k===q.track)?.l||''}${q.package?' · '+pkgOf(q.track,q.package).l:''}`:'',
+    drinks_menu:'',dj:'',waiters:'',bartenders:'',hostess:'',sketch:'',design:'',tech_notes:'',
+    per_adult:(q&&q.per_person)||'',per_child:(q&&q.price_per_child)||'',extras:'',
+    schedule:'',menu:menuLines.join('\n'),
+  };
+}
+function beoText(b){
+  const L=['📋 *דף הפקה — ניהול אירועים פסאו*'];
+  const line=(lbl,v)=>{if(v!=null&&String(v).trim()!=='')L.push(lbl?`${lbl}: ${v}`:String(v))};
+  BEO_FIELDS.forEach(sec=>{
+    const vals=sec.fields.filter(f=>b[f.k]!=null&&String(b[f.k]).trim()!=='');
+    if(!vals.length)return;
+    L.push('',`*${sec.sec}*`);
+    sec.fields.forEach(f=>{
+      let v=b[f.k];
+      if(f.k==='date'&&v)v=`${fmtDate(v)}${dayOfWeek(v)?' (יום '+dayOfWeek(v)+')':''}`;
+      if((f.k==='per_adult'||f.k==='per_child')&&v)v=`${v} ₪`;
+      line(f.l,v);
+    });
+  });
   return L.join('\n');
+}
+function openBeo(l,q,chk){
+  const b=Object.assign(beoDefaults(l,q),chk.beo||{});
+  let m=document.getElementById('beo-modal');
+  if(!m){m=document.createElement('div');m.id='beo-modal';m.className='sig-view';document.body.appendChild(m)}
+  m.innerHTML=`<div class="sig-modal beo-modal">
+    <div class="sig-modal-h">📋 דף הפקה — ${esc(l.full_name)||''}<button id="beo-close">✕</button></div>
+    <div class="beo-body">
+      ${BEO_FIELDS.map(sec=>`
+        <div class="beo-sec">${sec.sec}</div>
+        ${sec.fields.map(f=>f.type==='textarea'
+          ?`<textarea class="beo-in" data-k="${f.k}" rows="4" placeholder="${f.ph||''}">${esc(b[f.k]||'')}</textarea>`
+          :`<div class="beo-row"><label>${f.l}</label><input class="beo-in" data-k="${f.k}" type="${f.type==='date'?'date':'text'}" value="${esc(b[f.k]||'')}" placeholder="${f.ph||''}"></div>`
+        ).join('')}`).join('')}
+    </div>
+    <div class="beo-foot">
+      <button class="qa" id="beo-save">💾 שמור</button>
+      <button class="qa" id="beo-copy">📋 העתק</button>
+      <button class="qa wa" id="beo-wa">💬 שלח בוואטסאפ</button>
+    </div>
+  </div>`;
+  m.style.display='flex';
+  const collect=()=>{$$('.beo-in',m).forEach(i=>b[i.dataset.k]=i.value);return b};
+  const save=async()=>{chk.beo=collect();await saveChecklist(l.id,chk);showToast('דף ההפקה נשמר')};
+  const markBeoDone=async()=>{
+    if(!(chk.items.beo_created&&chk.items.beo_created.done)){
+      chk.items.beo_created={done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};
+      await saveChecklist(l.id,chk);
+    }
+    if(openLeadId===l.id)renderChecklist(l);
+  };
+  $('#beo-close',m).onclick=()=>{m.style.display='none'};
+  $('#beo-save',m).onclick=async()=>{await save();await markBeoDone()};
+  $('#beo-copy',m).onclick=async()=>{await save();const t=beoText(b);try{await navigator.clipboard.writeText(t);showToast('דף ההפקה הועתק')}catch(e){prompt('העתק:',t)}await markBeoDone()};
+  $('#beo-wa',m).onclick=async()=>{await save();window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(beoText(b)),'_blank');await markBeoDone()};
 }
 async function renderChecklist(l){
   const host=document.getElementById('x-checklist');if(!host)return;
@@ -1803,23 +1877,14 @@ async function renderChecklist(l){
         ${auto[it.k]&&!st.done?'<span class="chk-auto">אוטומטי</span>':(st.done&&st.by?`<span class="chk-meta">${esc(st.by)}${st.at?' · '+new Date(st.at).toLocaleDateString('he-IL'):''}</span>`:'')}
       </div>`}).join('')}
     <div class="chk-actions">
-      <button class="qa" id="chk-doc-copy">📋 העתק מסמך אירוע</button>
-      <button class="qa wa" id="chk-doc-wa">💬 שלח מסמך בוואטסאפ</button>
+      <button class="qa" id="chk-doc-open">📋 דף הפקה</button>
     </div>`;
-  const markBeo=async()=>{
-    if(!(chk.items.beo_created&&chk.items.beo_created.done)){
-      chk.items.beo_created={done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};
-      await saveChecklist(l.id,chk);renderChecklist(l);
-    }
-  };
   $$('.chk-item',host).forEach(row=>row.onclick=async()=>{
     const k=row.dataset.k;const cur=chk.items[k]||{};
     chk.items[k]=cur.done?{done:false}:{done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};
     await saveChecklist(l.id,chk);renderChecklist(l);
   });
-  const doc=()=>eventDocText(l,q);
-  const cp=$('#chk-doc-copy',host);if(cp)cp.onclick=async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(doc());showToast('מסמך האירוע הועתק')}catch(err){prompt('העתק:',doc())}markBeo()};
-  const wb=$('#chk-doc-wa',host);if(wb)wb.onclick=e=>{e.stopPropagation();window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(doc()),'_blank');markBeo()};
+  const ob=$('#chk-doc-open',host);if(ob)ob.onclick=e=>{e.stopPropagation();openBeo(l,q,chk)};
 }
 
 // ===== Draw dispatcher =====
