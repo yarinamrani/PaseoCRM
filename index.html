@@ -481,6 +481,13 @@
   .beo-in:focus{outline:none;border-color:var(--gold-dim)}
   textarea.beo-in{resize:vertical;margin-bottom:6px}
   .beo-foot{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  /* ===== Payments ===== */
+  .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .pay-f label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .pay-f input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font-size:13px;font-family:inherit}
+  .pay-f input:focus{outline:none;border-color:var(--gold-dim)}
+  .pay-balance{font-size:12px;color:var(--txt-2);padding:4px 2px 8px}
+  .pay-balance b{color:var(--gold-2)}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -904,18 +911,30 @@ window.addEventListener('message',async e=>{
   if(e.origin!=='https://paseo-event-maker.vercel.app')return;
   const row={
     lead_id:d.leadId,client_name:d.clientName||null,event_type:d.eventType||null,
-    event_date:d.eventDate||null,guests:Number(d.guests)||null,
+    event_date:d.eventDate||null,event_hours:d.hours||null,guests:Number(d.guests)||null,
+    kids_count:Number(d.kids)||0,price_per_child:Number(d.perChild)||0,
+    track:d.track||null,package:d.pkg||null,per_person:Number(d.perPerson)||null,
+    dishes:Array.isArray(d.menu)?d.menu:[],kids_menu:d.kidsMenu||null,
     total:Number(d.total)||null,em_link:d.link||null,
     status:'sent',sent_at:new Date().toISOString(),
     notes:'נוצרה ב-Event Maker',created_by:'Event Maker',updated_at:new Date().toISOString(),
   };
-  const {error}=await sb.from('crm_quotes').insert(row);
-  if(error){console.error('em quote save',error);showToast('שגיאה ברישום הצעת Event Maker');return}
-  sb.from('crm_activities').insert({lead_id:d.leadId,kind:'note',body:`📤 נוצרה הצעת מחיר ב-Event Maker · ₪${Math.round(Number(d.total)||0).toLocaleString('he-IL')} · ${d.link||''}`,actor:'מערכת'});
-  const lead=LEADS.find(x=>x.id===d.leadId);
-  if(lead&&!['won','lost'].includes(lead.status))await updateLead(d.leadId,{status:'offer_sent',updated_at:new Date().toISOString()});
-  if(openLeadId===d.leadId){loadActs(d.leadId);renderQuoteList(d.leadId)}
-  showToast('הצעת Event Maker נרשמה על הליד ✓');
+  // עריכה של אותה הצעה (אותו קישור) מעדכנת את השורה הקיימת — בלי כפילויות
+  const {data:ex}=await sb.from('crm_quotes').select('id').eq('em_link',d.link).limit(1);
+  if(ex&&ex.length){
+    const {error}=await sb.from('crm_quotes').update(row).eq('id',ex[0].id);
+    if(error){console.error('em quote update',error);showToast('שגיאה בעדכון הצעת Event Maker');return}
+    sb.from('crm_activities').insert({lead_id:d.leadId,kind:'note',body:`✏️ עודכנה הצעת Event Maker · ₪${Math.round(Number(d.total)||0).toLocaleString('he-IL')}`,actor:'מערכת'});
+    showToast('הצעת Event Maker עודכנה ✓');
+  } else {
+    const {error}=await sb.from('crm_quotes').insert(row);
+    if(error){console.error('em quote save',error);showToast('שגיאה ברישום הצעת Event Maker');return}
+    sb.from('crm_activities').insert({lead_id:d.leadId,kind:'note',body:`📤 נוצרה הצעת מחיר ב-Event Maker · ₪${Math.round(Number(d.total)||0).toLocaleString('he-IL')} · ${d.link||''}`,actor:'מערכת'});
+    const lead=LEADS.find(x=>x.id===d.leadId);
+    if(lead&&!['won','lost'].includes(lead.status))await updateLead(d.leadId,{status:'offer_sent',updated_at:new Date().toISOString()});
+    showToast('הצעת Event Maker נרשמה על הליד ✓');
+  }
+  if(openLeadId===d.leadId){loadActs(d.leadId);renderQuoteList(d.leadId);const l=LEADS.find(x=>x.id===d.leadId);if(l)renderChecklist(l)}
 });
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 
@@ -1267,7 +1286,9 @@ async function renderQuoteList(leadId){
   host.innerHTML=`<div class="quote-list-l">הצעות מחיר (${data.length})</div>`+data.map(q=>{
     const isEM=!!q.em_link;
     const pk=pkgOf(q.track||'meat',q.package||'premium');
-    const label=isEM?`📄 Event Maker · ${money(q.total||0)}`:`${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}`;
+    const label=isEM
+      ?`📄 ${q.track?`${TRACKS.find(x=>x.k===q.track)?.l||''} ${pkgOf(q.track,q.package||'premium').l} · `:'Event Maker · '}${money(q.total||0)}`
+      :`${TRACKS.find(x=>x.k===q.track)?.l||''} ${pk.l} · ${money(q.total||0)}`;
     return `<div class="quote-row" data-id="${q.id}">
       <span class="quote-badge ${q.status}">${QSTAT[q.status]||q.status}</span>
       <span class="quote-row-main">${label}</span>
@@ -1450,6 +1471,7 @@ async function init(){
   await loadCatalog();
   await loadLeads();
   await loadAcceptedQuotes();
+  await loadPayStates();
   draw();
   sb.channel('crm-leads').on('postgres_changes',{event:'*',schema:'public',table:'crm_leads'},()=>loadLeads()).subscribe();
   sb.channel('crm-acts').on('postgres_changes',{event:'*',schema:'public',table:'crm_activities'},p=>{
@@ -1895,6 +1917,46 @@ async function renderChecklist(l){
     await saveChecklist(l.id,chk);renderChecklist(l);
   });
   const ob=$('#chk-doc-open',host);if(ob)ob.onclick=e=>{e.stopPropagation();openBeo(l,q,chk)};
+  renderPayments(l,chk,qs);
+}
+
+// ===== Payments (מקדמות ויתרות) — נשמר באותה רשומת chk_ המשותפת =====
+let PAY_STATE={}; // leadId -> {dep,bal,tracked} — לזיהוי גבייה חסרה במסך לטיפול
+async function loadPayStates(){
+  const {data}=await sb.from('proposals').select('id,data');
+  PAY_STATE={};
+  (data||[]).forEach(r=>{
+    if(!String(r.id).startsWith('chk_'))return;
+    const p=(r.data||{}).pay||{};
+    PAY_STATE[String(r.id).slice(4)]={dep:!!(p.depositPaid&&p.depositPaid.done),bal:!!(p.balancePaid&&p.balancePaid.done),tracked:!!(p.total||p.depositAmt||p.depositPaid||p.balancePaid)};
+  });
+}
+function renderPayments(l,chk,qs){
+  const host=document.getElementById('x-payments');if(!host||openLeadId!==l.id)return;
+  const q=qs.find(x=>x.status==='accepted')||qs[0]||null;
+  const pay=chk.pay||(chk.pay={});
+  const total=pay.total!=null?pay.total:(q&&q.total?Math.round(Number(q.total)):'');
+  const dep=pay.depositAmt!=null?pay.depositAmt:(total?Math.round(Number(total)*0.2):'');
+  const balance=Math.max(0,(Number(total)||0)-(Number(dep)||0));
+  const stamp=s=>s&&s.done&&s.by?`<span class="chk-meta">${esc(s.by)}${s.at?' · '+new Date(s.at).toLocaleDateString('he-IL'):''}</span>`:'';
+  const depDone=!!(pay.depositPaid&&pay.depositPaid.done),balDone=!!(pay.balancePaid&&pay.balancePaid.done);
+  host.innerHTML=`<div class="sec-title">תשלומים</div>
+    <div class="pay-grid">
+      <div class="pay-f"><label>סה״כ אירוע (₪)</label><input id="pay-total" type="number" inputmode="numeric" value="${total}" placeholder="0"></div>
+      <div class="pay-f"><label>מקדמה 20% (₪)</label><input id="pay-dep" type="number" inputmode="numeric" value="${dep}" placeholder="0"></div>
+    </div>
+    <div class="chk-item ${depDone?'done':''}" id="pay-dep-t"><span class="chk-box">${depDone?'✓':''}</span><span class="chk-label">מקדמה התקבלה</span>${stamp(pay.depositPaid)}</div>
+    <div class="pay-balance">יתרה לתשלום: <b>${money(balance)}</b></div>
+    <div class="chk-item ${balDone?'done':''}" id="pay-bal-t"><span class="chk-box">${balDone?'✓':''}</span><span class="chk-label">יתרה שולמה</span>${stamp(pay.balancePaid)}</div>`;
+  const persist=async()=>{
+    await saveChecklist(l.id,chk);
+    PAY_STATE[l.id]={dep:!!(pay.depositPaid&&pay.depositPaid.done),bal:!!(pay.balancePaid&&pay.balancePaid.done),tracked:true};
+    renderPayments(l,chk,qs);updateAttBadge();
+  };
+  $('#pay-total',host).onchange=e=>{pay.total=Number(e.target.value)||0;if(pay.depositAmt==null)pay.depositAmt=Math.round(pay.total*0.2);persist()};
+  $('#pay-dep',host).onchange=e=>{pay.depositAmt=Number(e.target.value)||0;persist()};
+  $('#pay-dep-t',host).onclick=()=>{pay.depositPaid=depDone?{done:false}:{done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};persist()};
+  $('#pay-bal-t',host).onclick=()=>{pay.balancePaid=balDone?{done:false}:{done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};persist()};
 }
 
 // ===== Draw dispatcher =====
@@ -1976,8 +2038,20 @@ async function drawQuotesView(){
 
 // ===== Needs-attention triage (מקובץ לסקציות — לידים חדשים לא נקברים) =====
 function attentionGroups(){
-  const G={new:[],event:[],offer:[],followup:[]};
+  const G={new:[],event:[],offer:[],followup:[],pay:[]};
   LEADS.forEach(l=>{
+    // 💳 גבייה — רץ גם על לידים סגורים: אירוע קרוב שהמקדמה/יתרה שלו לא סומנו
+    if(l.status!=='lost'&&l.relevance!=='irrelevant'){
+      const dP=l.event_date?daysUntil(l.event_date):null;
+      const signed=ACCEPTED_LEADS.has(l.id)||l.status==='won';
+      if(signed&&dP!=null&&dP>=0&&dP<=14){
+        const ps=PAY_STATE[l.id];
+        if(!ps||!ps.dep||!ps.bal){
+          const what=(!ps||!ps.dep)?'מקדמה לא סומנה כהתקבלה':'יתרה לא סומנה כשולמה';
+          G.pay.push({l,icon:'💳',reason:`${what} — האירוע ${dP===0?'היום':dP===1?'מחר':'בעוד '+dP+' ימים'}`,sort:dP});
+        }
+      }
+    }
     if(['won','lost'].includes(l.status)||l.relevance==='irrelevant')return;
     if(ACCEPTED_LEADS.has(l.id)||isCold(l)||isPast(l))return;
     if(l.followup_reminded_at&&new Date(l.followup_reminded_at)>new Date())return; // נדחה
@@ -1995,7 +2069,7 @@ function attentionGroups(){
   Object.values(G).forEach(a=>a.sort((x,y)=>x.sort-y.sort));
   return G;
 }
-function attentionCount(){const G=attentionGroups();return G.new.length+G.event.length+G.offer.length+G.followup.length}
+function attentionCount(){const G=attentionGroups();return G.new.length+G.event.length+G.offer.length+G.followup.length+G.pay.length}
 function updateAttBadge(){const el=$('#att-badge');if(!el)return;const n=attentionCount();el.textContent=n||'';el.style.display=n?'inline-flex':'none'}
 function snoozeLead(id,days,msg){const d=new Date();d.setDate(d.getDate()+days);updateLead(id,{followup_reminded_at:d.toISOString()}).then(()=>{showToast(msg);draw()})}
 function attCard(item,cls){
@@ -2018,6 +2092,7 @@ function drawAttention(){
   const G=attentionGroups();
   if(!attentionCount()){main.innerHTML=`<div class="att-empty"><div style="font-size:52px">🎉</div><div>הכל מטופל!</div><div class="att-empty-sub">אין לידים שדורשים טיפול כרגע.</div></div>`;return}
   const sections=[
+    ['pay','💳 גבייה','att-offer'],
     ['new','🆕 לידים חדשים','att-new'],
     ['event','📅 אירועים קרובים','att-event'],
     ['offer','💰 הצעות ללא מענה','att-offer'],
@@ -2460,6 +2535,9 @@ function drawDetail(){
 
       <!-- Event checklist -->
       <div class="detail-section" id="x-checklist"></div>
+
+      <!-- Payments -->
+      <div class="detail-section" id="x-payments"></div>
 
       <!-- Send menu -->
       ${l.phone?`<div class="menu-actions">
