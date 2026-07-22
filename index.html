@@ -985,13 +985,22 @@ async function createLead(){
   openDetail(data.id);
 }
 async function addActivity(leadId,kind,body,actor){
-  if(!body.trim())return;
+  if(!body.trim()){showToast('אין תוכן לשמירה — כתוב משהו קודם');return}
   const row={lead_id:leadId,kind,body:body.trim(),actor};
-  const {data,error}=await sb.from('crm_activities').insert(row).select().single();
-  if(error){showToast('הוספה נכשלה');return}
-  ACTS[leadId]=[data,...(ACTS[leadId]||[])];
+  const {data,error}=await sb.from('crm_activities').insert(row).select();
+  if(error){
+    console.error('activity insert',error);
+    // ייתכן שהשורה כן נשמרה אבל הקריאה חזרה נכשלה — בודקים מול השרת לפני שמכריזים על כישלון
+    const {data:check}=await sb.from('crm_activities').select('*').eq('lead_id',leadId).order('created_at',{ascending:false}).limit(20);
+    const saved=(check||[]).some(a=>a.body===row.body&&a.kind===row.kind);
+    if(saved){ACTS[leadId]=check;actDraft={kind:'call',body:'',actor};drawDetail();showToast('נשמר ✓')}
+    else showToast('שמירה נכשלה: '+(error.message||error.code||'שגיאה לא ידועה'));
+    return;
+  }
+  const rec=Array.isArray(data)?data[0]:data;
+  if(rec)ACTS[leadId]=[rec,...(ACTS[leadId]||[])];
   actDraft={kind:'call',body:'',actor};
-  drawDetail();showToast('נוסף');
+  drawDetail();showToast('נשמר ✓');
 }
 
 // ===== Quote builder =====
