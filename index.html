@@ -691,7 +691,7 @@ const STATUSES = [
   {k:'offer_sent', l:'הצעה',         c:'var(--st-offer)'},
   {k:'negotiation',l:'מו״מ',         c:'var(--st-neg)'},
   {k:'won',        l:'נסגר',         c:'var(--st-won)'},
-  {k:'lost',       l:'אבוד',         c:'var(--st-lost)'},
+  {k:'lost',       l:'פולואפ 2',     c:'var(--st-lost)'},
   {k:'followup',   l:'מעקב',         c:'var(--st-followup)'},
 ];
 const STATUS_MAP = Object.fromEntries(STATUSES.map(s=>[s.k,s]));
@@ -751,6 +751,7 @@ function fmtRel(ts){
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
 const WA_OPENING_MSG='היי, מדברים מהפסאו 🌅 ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+const waFollowup2Link=l=>{if(!l.phone)return null;const d=l.phone.replace(/\D/g,'').replace(/^0/,'972');const msg=`היי ${l.full_name||''}, האירוע שפנית לפסאו עדיין רלוונטי?`;return `https://wa.me/${d}?text=${encodeURIComponent(msg)}`};
 // לינקים לתפריטי האירועים (מתארחים ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-dairy.pdf';
 const MENU_MEAT_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-meat.pdf';
@@ -2254,6 +2255,7 @@ function drawDetail(){
       <div class="quick-actions">
         ${l.phone?`<a class="qa call" href="tel:${esc(l.phone)}">📞 התקשר</a>`:''}
         ${wa?`<a class="qa wa" href="${wa}" target="_blank">💬 WhatsApp</a>`:''}
+        ${waFollowup2Link(l)?`<a class="qa wa" href="${waFollowup2Link(l)}" target="_blank">💬 פולואפ 2</a>`:''}
         ${l.email?`<a class="qa" href="mailto:${esc(l.email)}">✉️ מייל</a>`:''}
         <button class="qa del" id="x-del">🗑 מחק ליד</button>
       </div>
