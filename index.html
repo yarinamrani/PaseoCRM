@@ -2656,10 +2656,7 @@ function drawDetail(){
   });
   $('#x-act-body',el).oninput=e=>{actDraft.body=e.target.value};
   $('#x-act-actor',el).onchange=e=>{actDraft.actor=e.target.value};
-  $('#x-act-add',el).onclick=()=>{
-    if(!actDraft.body.trim())return;
-    addActivity(l.id,actDraft.kind,actDraft.body,actDraft.actor);
-  };
+  $('#x-act-add',el).onclick=()=>{addActivity(l.id,actDraft.kind,actDraft.body,actDraft.actor)};
 }
 function actHTML(a){
   const k=ACT_KIND_MAP[a.kind]||{ico:'●',l:a.kind};
