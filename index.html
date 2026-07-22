@@ -1637,6 +1637,17 @@ function inTimeframe(l){
 }
 function filtered(){
   let arr=LEADS.filter(l=>{
+    // חיפוש גובר על כל הפילטרים — מוצא כל ליד (רלוונטי, לא רלוונטי, פולואפ 2, עבר...)
+    if(search){
+      const h=[l.full_name,l.phone,l.email,l.event_type,l.notes,l.event_date_raw,l.hostess].filter(Boolean).join(' ').toLowerCase();
+      if(h.includes(search))return true;
+      const digits=search.replace(/\D/g,'');
+      if(digits.length>=3){
+        const pd=(l.phone||'').replace(/\D/g,'');
+        if(pd.includes(digits)||pd.includes(digits.replace(/^0/,'')))return true;
+      }
+      return false;
+    }
     if(sourceTab!=='all'&&l.source!==sourceTab)return false;
     // לא-רלוונטי מוסתר כברירת מחדל — מופיע רק אם בוחרים אותו ספציפית בפילטר
     if(filters.relevance==='irrelevant'){
@@ -1653,10 +1664,6 @@ function filtered(){
     }
     if(!inTimeframe(l))return false;
     if(filters.timeframe!=='past'&&isPast(l))return false; // הסתר אירועים שעברו (זמינים בפילטר "עבר")
-    if(search){
-      const h=[l.full_name,l.phone,l.email,l.event_type,l.notes,l.event_date_raw,l.hostess].filter(Boolean).join(' ').toLowerCase();
-      if(!h.includes(search))return false;
-    }
     return true;
   });
   // sort
