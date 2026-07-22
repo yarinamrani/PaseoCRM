@@ -750,7 +750,16 @@ function fmtRel(ts){
   return d.toLocaleDateString('he-IL');
 }
 function dayOfWeek(d){if(!d)return null;return DAYS[new Date(d).getDay()]}
-const WA_OPENING_MSG='היי, מדברים מהפסאו 🌅 ראיתי שהשארת פרטים בנוגע לאירוע אצלנו. מתי נוח לך שנדבר?';
+// הודעת פתיחה אישית — כוללת את פרטי האירוע של הליד (סוג, חוגגים, תאריך)
+function waOpeningMsg(l){
+  const name=(l&&l.full_name||'').trim().split(/\s+/)[0];
+  const about=l&&l.event_type?`בנוגע ל${l.event_type}`:'בנוגע לאירוע אצלנו';
+  const extras=[];
+  const g=l&&(l.guests_raw||l.guests_max||l.guests_min);
+  if(g)extras.push(`ל-${g} חוגגים`);
+  if(l&&l.event_date)extras.push(`בתאריך ${fmtDate(l.event_date)}`);
+  return `היי${name?' '+name:''}, מדברים מהפסאו 🌅 ראיתי שהשארת פרטים ${about}${extras.length?' '+extras.join(' '):''}. מתי נוח לך שנדבר?`;
+}
 const waFollowup2Link=l=>{if(!l.phone)return null;const d=l.phone.replace(/\D/g,'').replace(/^0/,'972');const msg=`היי ${l.full_name||''}, האירוע שפנית לפסאו עדיין רלוונטי?`;return `https://wa.me/${d}?text=${encodeURIComponent(msg)}`};
 // לינקים לתפריטי האירועים (מתארחים ב-repo PaseoCRM)
 const MENU_DAIRY_URL='https://yarinamrani.github.io/PaseoCRM/paseo-events-dairy.pdf';
@@ -847,7 +856,7 @@ function sendMenu(kind,lead){
   const msg=menuMsg(kind,lead.full_name);
   window.open(`https://wa.me/${d}?text=${encodeURIComponent(msg)}`,'_blank');
 }
-function waLink(p){if(!p)return null;const d=p.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(WA_OPENING_MSG)}`}
+function waLink(l){if(!l||!l.phone)return null;const d=l.phone.replace(/\D/g,'').replace(/^0/,'972');return `https://wa.me/${d}?text=${encodeURIComponent(waOpeningMsg(l))}`}
 // ===== Event Maker integration (paseo-event-maker.vercel.app) =====
 // פותח את מחולל ההצעות הממותג (PDF + פונטים) עם פרטי הליד ממולאים מראש דרך פרמטר ?load=
 const EVENT_MAKER_URL='https://paseo-event-maker.vercel.app/';
@@ -1373,7 +1382,7 @@ function contactsList(){
 function contactRows(list,ql){
   const shown=ql?list.filter(l=>[l.full_name,l.phone].filter(Boolean).join(' ').toLowerCase().includes(ql)):list;
   if(!shown.length)return '<div class="att-empty" style="padding:40px 0">לא נמצאו אנשי קשר</div>';
-  return shown.map(l=>{const wa=waLink(l.phone);return `<div class="ct-row">
+  return shown.map(l=>{const wa=waLink(l);return `<div class="ct-row">
     <div class="ct-info"><div class="ct-name">${esc(l.full_name)||'—'}</div><div class="ct-phone" dir="ltr">${esc(l.phone)}</div></div>
     <div class="ct-acts">${wa?`<a class="att-btn wa" href="${wa}" target="_blank">💬</a>`:''}<a class="att-btn" href="tel:${esc(l.phone)}">📞</a></div>
   </div>`}).join('');
@@ -1808,7 +1817,7 @@ function attentionCount(){const G=attentionGroups();return G.new.length+G.event.
 function updateAttBadge(){const el=$('#att-badge');if(!el)return;const n=attentionCount();el.textContent=n||'';el.style.display=n?'inline-flex':'none'}
 function snoozeLead(id,days,msg){const d=new Date();d.setDate(d.getDate()+days);updateLead(id,{followup_reminded_at:d.toISOString()}).then(()=>{showToast(msg);draw()})}
 function attCard(item,cls){
-  const {l,icon,reason}=item;const wa=waLink(l.phone);
+  const {l,icon,reason}=item;const wa=waLink(l);
   return `<div class="att-card ${cls}" data-id="${l.id}">
     <div class="att-reason"><span>${icon}</span>${reason}</div>
     <div class="att-name">${esc(l.full_name)||'ללא שם'}${l.assigned_to?`<span class="chip assigned">${esc(l.assigned_to)}</span>`:''}</div>
@@ -1890,7 +1899,7 @@ function cardHTML(l){
   const n=daysUntil(l.event_date);
   const urgent=n!=null&&n>=0&&n<=7;
   const today=n===0;
-  const wa=waLink(l.phone);
+  const wa=waLink(l);
   const st=STATUS_MAP[l.status]||STATUSES[0];
   const irrel=l.relevance==='irrelevant';
   return `<div class="card ${irrel?'irrelevant':''}" data-id="${l.id}" style="border-right-color:${st.c}">
@@ -1940,7 +1949,7 @@ function drawTable(){
       const cls=[l.relevance==='irrelevant'?'irrelevant':'',n===0?'today':(n!=null&&n>=0&&n<=7)?'urgent':''].filter(Boolean).join(' ');
       const st=STATUS_MAP[l.status]||STATUSES[0];
       const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
-      const wa=waLink(l.phone);
+      const wa=waLink(l);
       return `<tr class="${cls}" data-id="${l.id}">
         <td><b>${esc(l.full_name)||'—'}</b>${l.duplicate_of?` <span class="chip" style="background:rgba(231,76,60,.18);color:#ff8a7a;font-size:10px">🔁 כפול</span>`:''}</td>
         <td>${l.phone?`<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>${wa?` · <a href="${wa}" target="_blank">💬</a>`:''}`:'—'}</td>
@@ -2039,7 +2048,7 @@ function mobCardHTML(l){
   const st=STATUS_MAP[l.status]||STATUSES[0];
   const rel=RELEVANCE.find(r=>r.k===l.relevance)||RELEVANCE[1];
   const irrel=l.relevance==='irrelevant';
-  const wa=waLink(l.phone);
+  const wa=waLink(l);
   const dateStr=l.event_date?fmtDate(l.event_date):(l.event_date_raw||'');
   const dow=l.event_date?dayOfWeek(l.event_date):'';
   const daysHTML=l.event_date?daysLabel(l.event_date):'';
@@ -2238,7 +2247,7 @@ function drawDetail(){
   if(!openLeadId)return;
   const el=document.querySelector('.detail');if(!el)return;
   const l=LEADS.find(x=>x.id===openLeadId);if(!l)return;
-  const wa=waLink(l.phone);
+  const wa=waLink(l);
   const acts=ACTS[l.id]||[];
   const st=STATUS_MAP[l.status]||STATUSES[0];
 
