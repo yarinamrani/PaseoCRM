@@ -458,6 +458,19 @@
   .qv-btn.edit{border-color:var(--gold-dim);color:var(--gold-2)}
   .qv-btn.wa{border-color:rgba(37,211,102,.4);color:#5fd896}
   .qv-btn.del{border-color:rgba(231,76,60,.35);color:#f08a7e;margin-inline-start:auto}
+  /* ===== Event checklist ===== */
+  .chk-count{font-size:11px;color:var(--gold-2);font-weight:700;margin-inline-start:6px}
+  .chk-bar{height:6px;background:var(--panel-2);border-radius:99px;margin:8px 0 12px;overflow:hidden}
+  .chk-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));transition:width .3s}
+  .chk-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;background:var(--panel-2)}
+  .chk-item.done{opacity:.8;border-color:rgba(46,204,113,.3)}
+  .chk-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;background:var(--panel);color:#06220f}
+  .chk-item.done .chk-box{background:var(--ok);border-color:var(--ok)}
+  .chk-label{flex:1;font-size:13px}
+  .chk-item.done .chk-label{text-decoration:line-through;color:var(--muted)}
+  .chk-auto{font-size:10px;color:#7fb4e8;border:1px solid rgba(74,144,217,.35);border-radius:99px;padding:2px 7px;white-space:nowrap}
+  .chk-meta{font-size:10px;color:var(--muted);white-space:nowrap}
+  .chk-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
   .quote-list-l{font-size:11px;color:var(--muted);margin:12px 2px 6px;font-weight:600}
   .quote-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
     border-radius:10px;padding:9px 11px;margin-top:6px;cursor:pointer}
@@ -1722,6 +1735,93 @@ function drawStats(){
 
 function isMobile(){return window.matchMedia&&window.matchMedia('(max-width:900px)').matches}
 
+// ===== Event checklist (ווידוא מנהל האירועים) =====
+const CHECKLIST_ITEMS=[
+  {k:'proposal_sent',    l:'הצעת מחיר נשלחה ללקוח'},
+  {k:'proposal_approved',l:'ההצעה אושרה ונחתמה ע״י הלקוח'},
+  {k:'manager_approved', l:'אישור מנהל האירועים'},
+  {k:'beo_created',      l:'הופק מסמך אירוע'},
+  {k:'beo_to_venue',     l:'המסמך הועבר למנהל המקום'},
+  {k:'kitchen_updated',  l:'המטבח עודכן (ע״י מנהל המקום)'},
+  {k:'cleaning_set',     l:'צוות ניקיון סודר'},
+  {k:'waiters_set',      l:'מלצרים סודרו'},
+  {k:'bartenders_set',   l:'ברמנים סודרו'},
+  {k:'event_manager_set',l:'מנהל אירוע משובץ'},
+];
+// נשמר בטבלת proposals המשותפת תחת מזהה chk_<leadId> — משותף לכל הצוות
+async function loadChecklist(leadId){
+  const {data}=await sb.from('proposals').select('data').eq('id','chk_'+leadId).maybeSingle();
+  const c=(data&&data.data)||{};if(!c.items)c.items={};return c;
+}
+async function saveChecklist(leadId,chk){
+  chk.updatedAt=new Date().toISOString();
+  const {error}=await sb.from('proposals').upsert([{id:'chk_'+leadId,data:chk}],{onConflict:'id'});
+  if(error){console.error('checklist',error);showToast('שמירת צ׳ק ליסט נכשלה')}
+}
+// מסמך אירוע (BEO) — נבנה מהליד + ההצעה העדכנית
+function eventDocText(l,q){
+  const L=[];
+  L.push('📋 *מסמך אירוע — PASEO*','');
+  L.push(`לקוח: ${l.full_name||''}${l.phone?' · '+l.phone:''}`);
+  if(l.event_type)L.push(`אירוע: ${l.event_type}`);
+  if(l.event_date)L.push(`תאריך: ${fmtDate(l.event_date)}${dayOfWeek(l.event_date)?' (יום '+dayOfWeek(l.event_date)+')':''}`);
+  const hrs=(q&&q.event_hours)||l.event_time;
+  if(hrs)L.push(`שעות: ${hrs}`);
+  const g=(q&&q.guests)||l.guests_raw;const kd=q&&q.kids_count;
+  if(g)L.push(`אורחים: ${g}${kd?` + ${kd} ילדים`:''}`);
+  if(q){
+    if(q.track&&q.package)L.push(`חבילה: ${TRACKS.find(t=>t.k===q.track)?.l||q.track} ${pkgOf(q.track,q.package).l} · ₪${q.per_person||''} לאורח`);
+    if(q.dishes&&q.dishes.length){L.push('','*תפריט:*');COURSES.forEach(c=>{const ds=q.dishes.filter(d=>d.course===c.k);if(ds.length)L.push(`${c.l}: ${ds.map(d=>d.name).join(', ')}`)});}
+    if(q.kids_menu)L.push(`תפריט ילדים: ${q.kids_menu}`);
+    if(q.upgrades&&q.upgrades.length)L.push(`שדרוגים: ${q.upgrades.map(u=>u.l||u.name||'').filter(Boolean).join(', ')}`);
+    if(q.services&&q.services.length)L.push(`שירותים: ${q.services.map(s=>s.l||s.name||'').filter(Boolean).join(', ')}`);
+    if(q.total)L.push('',`סה״כ: ₪${Math.round(Number(q.total)).toLocaleString('he-IL')}`);
+    if(q.em_link)L.push(`קישור הצעה: ${q.em_link}`);
+    if(q.notes)L.push('',`הערות הצעה: ${q.notes}`);
+  }
+  if(l.notes)L.push('',`הערות פנימיות: ${l.notes}`);
+  return L.join('\n');
+}
+async function renderChecklist(l){
+  const host=document.getElementById('x-checklist');if(!host)return;
+  const [chk,qr]=await Promise.all([
+    loadChecklist(l.id),
+    sb.from('crm_quotes').select('*').eq('lead_id',l.id).order('created_at',{ascending:false}),
+  ]);
+  if(!document.getElementById('x-checklist')||openLeadId!==l.id)return;
+  const qs=qr.data||[];
+  const auto={proposal_sent:qs.some(q=>['sent','accepted'].includes(q.status)),proposal_approved:qs.some(q=>q.status==='accepted')};
+  const q=qs.find(x=>x.status==='accepted')||qs[0]||null;
+  const isDone=it=>((chk.items[it.k]&&chk.items[it.k].done)||auto[it.k]);
+  const doneCount=CHECKLIST_ITEMS.filter(isDone).length;
+  host.innerHTML=`<div class="sec-title">צ׳ק ליסט אירוע<span class="chk-count">${doneCount}/${CHECKLIST_ITEMS.length}</span></div>
+    <div class="chk-bar"><div class="chk-bar-fill" style="width:${Math.round(doneCount/CHECKLIST_ITEMS.length*100)}%"></div></div>
+    ${CHECKLIST_ITEMS.map(it=>{const st=chk.items[it.k]||{};const done=isDone(it);
+      return `<div class="chk-item ${done?'done':''}" data-k="${it.k}">
+        <span class="chk-box">${done?'✓':''}</span>
+        <span class="chk-label">${it.l}</span>
+        ${auto[it.k]&&!st.done?'<span class="chk-auto">אוטומטי</span>':(st.done&&st.by?`<span class="chk-meta">${esc(st.by)}${st.at?' · '+new Date(st.at).toLocaleDateString('he-IL'):''}</span>`:'')}
+      </div>`}).join('')}
+    <div class="chk-actions">
+      <button class="qa" id="chk-doc-copy">📋 העתק מסמך אירוע</button>
+      <button class="qa wa" id="chk-doc-wa">💬 שלח מסמך בוואטסאפ</button>
+    </div>`;
+  const markBeo=async()=>{
+    if(!(chk.items.beo_created&&chk.items.beo_created.done)){
+      chk.items.beo_created={done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};
+      await saveChecklist(l.id,chk);renderChecklist(l);
+    }
+  };
+  $$('.chk-item',host).forEach(row=>row.onclick=async()=>{
+    const k=row.dataset.k;const cur=chk.items[k]||{};
+    chk.items[k]=cur.done?{done:false}:{done:true,by:actDraft.actor||'ירין',at:new Date().toISOString()};
+    await saveChecklist(l.id,chk);renderChecklist(l);
+  });
+  const doc=()=>eventDocText(l,q);
+  const cp=$('#chk-doc-copy',host);if(cp)cp.onclick=async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(doc());showToast('מסמך האירוע הועתק')}catch(err){prompt('העתק:',doc())}markBeo()};
+  const wb=$('#chk-doc-wa',host);if(wb)wb.onclick=e=>{e.stopPropagation();window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(doc()),'_blank');markBeo()};
+}
+
 // ===== Draw dispatcher =====
 function draw(){
   drawSourceTabs();
@@ -1743,7 +1843,7 @@ let EM_PROPOSALS=null;
 async function loadEmProposals(){
   const {data,error}=await sb.from('proposals').select('*').order('createdAt',{ascending:false});
   if(error){console.error('proposals',error);EM_PROPOSALS=[];return}
-  EM_PROPOSALS=data||[];
+  EM_PROPOSALS=(data||[]).filter(p=>!String(p.id).startsWith('chk_'));
 }
 async function drawQuotesView(){
   const el=$('#main');
@@ -2283,6 +2383,9 @@ function drawDetail(){
         <div id="x-quote-list"></div>
       </div>
 
+      <!-- Event checklist -->
+      <div class="detail-section" id="x-checklist"></div>
+
       <!-- Send menu -->
       ${l.phone?`<div class="menu-actions">
         <div class="menu-actions-label">שליחת תפריט אירועים בוואטסאפ:</div>
@@ -2387,6 +2490,7 @@ function drawDetail(){
   $('#x-quote',el).onclick=()=>openQuote(l);
   $('#x-em-quote',el).onclick=()=>openEventMaker(l);
   renderQuoteList(l.id);
+  renderChecklist(l);
 
   // Status
   $$('#x-status button',el).forEach(b=>b.onclick=()=>{
