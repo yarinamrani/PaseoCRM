@@ -1285,8 +1285,53 @@ async function copyQuoteLink(){
   try{await navigator.clipboard.writeText(url);showToast('הקישור הועתק')}catch(e){prompt('העתק את הקישור:',url)}
   renderQuoteList(Q.lead_id);
 }
+// משיכת הצעות Event Maker מה-DB המשותף — עובד גם בלי שהטאב היה פתוח בזמן היצירה
+const EM_SYNC_LOCK={};
+async function syncEmQuotes(leadId){
+  if(EM_SYNC_LOCK[leadId])return 0; // הפאנל מצויר פעמיים בפתיחה — מריצים סנכרון אחד בלבד
+  EM_SYNC_LOCK[leadId]=true;
+  try{
+    const {data:props}=await sb.from('proposals').select('id,data').eq('data->crm->>lead',leadId);
+    if(!props||!props.length)return 0;
+    const {data:qs}=await sb.from('crm_quotes').select('id,em_link,status').eq('lead_id',leadId);
+    const rows=qs||[];
+    let changed=0;
+    for(const pr of props){
+      if(String(pr.id).startsWith('chk_'))continue;
+      const d=pr.data||{};
+      const link=`${EVENT_MAKER_URL}?p=${pr.id}`;
+      const existing=rows.find(q=>q.em_link&&q.em_link.endsWith('?p='+pr.id));
+      const row={lead_id:leadId,client_name:d.n||null,event_type:d.t||null,event_date:d.d||null,event_hours:d.tm||null,
+        guests:Number(d.g)||null,kids_count:Number(d.c)||0,price_per_child:Number(d.ppc)||0,
+        track:d.mt||null,package:d.pt||null,per_person:Number(d.ppg)||null,
+        dishes:Array.isArray(d.menuR)?d.menuR:[],kids_menu:d.kidsR||null,
+        total:(d.totals&&Number(d.totals.tv))||null,em_link:link,
+        status:d.sig?'accepted':(existing&&existing.status==='accepted'?'accepted':'sent'),
+        created_by:'Event Maker',updated_at:new Date().toISOString()};
+      if(d.sig&&!(existing&&existing.status==='accepted')){row.accepted_at=new Date().toISOString();row.signature=d.sig;row.accepted_name=d.sigName||d.n||null}
+      if(existing){
+        const {error}=await sb.from('crm_quotes').update(row).eq('id',existing.id);
+        if(!error)changed++;
+      } else {
+        row.sent_at=new Date().toISOString();row.notes='סונכרן מ-Event Maker';
+        const {error}=await sb.from('crm_quotes').insert(row);
+        if(!error){changed++;
+          sb.from('crm_activities').insert({lead_id:leadId,kind:'note',body:`📤 הצעת Event Maker נקלטה · ${link}`,actor:'מערכת'});
+          const lead=LEADS.find(x=>x.id===leadId);
+          if(lead&&!['won','lost'].includes(lead.status))updateLead(leadId,{status:'offer_sent',updated_at:new Date().toISOString()});
+        }
+      }
+      if(d.sig)ACCEPTED_LEADS.add(leadId);
+    }
+    return changed;
+  }catch(e){console.warn('em sync',e);return 0}
+  finally{delete EM_SYNC_LOCK[leadId]}
+}
 async function renderQuoteList(leadId){
   const host=document.getElementById('x-quote-list');if(!host)return;
+  const synced=await syncEmQuotes(leadId);
+  if(synced&&openLeadId===leadId){const l=LEADS.find(x=>x.id===leadId);if(l)renderChecklist(l)}
+  if(!document.getElementById('x-quote-list'))return;
   const {data}=await sb.from('crm_quotes').select('*').eq('lead_id',leadId).order('created_at',{ascending:false});
   if(!data||!data.length){host.innerHTML='';return}
   const emCode=q=>{if(!q.em_link)return null;const m=q.em_link.match(/[?&]p=([A-Za-z0-9]{2,20})$/);return m?m[1]:null};
@@ -2535,8 +2580,7 @@ function drawDetail(){
 
       <!-- Quote builder -->
       <div class="menu-actions">
-        <button class="quote-cta" id="x-quote">🧾 צור הצעת מחיר</button>
-        <button class="quote-cta alt" id="x-em-quote">📄 הצעת מחיר מעוצבת (Event Maker)</button>
+        <button class="quote-cta" id="x-em-quote">📄 צור הצעת מחיר</button>
         <div id="x-quote-list"></div>
       </div>
 
@@ -2647,7 +2691,6 @@ function drawDetail(){
   $('#x-del',el).onclick=()=>deleteLead(l.id);
   const md=$('#x-menu-dairy',el);if(md)md.onclick=()=>sendMenu('dairy',l);
   const mm=$('#x-menu-meat',el);if(mm)mm.onclick=()=>sendMenu('meat',l);
-  $('#x-quote',el).onclick=()=>openQuote(l);
   $('#x-em-quote',el).onclick=()=>openEventMaker(l);
   renderQuoteList(l.id);
   renderChecklist(l);
